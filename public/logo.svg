@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Spark above -->
+  <path d="M 16 2 L 17 5 L 20 6 L 17 7 L 16 10 L 15 7 L 12 6 L 15 5 Z" fill="#3b82f6" />
+  
+  <!-- Anvil Body -->
+  <path d="M 2 12 L 30 12 L 30 16 L 25 16 L 25 26 L 30 30 L 2 30 L 7 26 L 7 16 Q 2 16 2 12 Z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(59,130,246,0.08)" />
+  
+  <!-- Image Frame inside Anvil -->
+  <rect x="11" y="17" width="10" height="8" rx="1" stroke="#3b82f6" stroke-width="2" fill="none" />
+  <path d="M 11 23 L 14.5 19.5 L 21 25" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="18" cy="19.5" r="1.2" fill="#3b82f6" />
+</svg>
