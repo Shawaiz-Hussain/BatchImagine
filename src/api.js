@@ -129,7 +129,7 @@ Example output format:
           Authorization: `Bearer ${openrouterKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': window.location.origin,
-          'X-OpenRouter-Title': 'BatchForge',
+          'X-OpenRouter-Title': 'Batch Imagine',
         },
         body: JSON.stringify({
           model: modelId,
@@ -299,7 +299,7 @@ export async function downloadAllAsZip(images) {
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(zipBlob);
-    a.download = 'batchforge_images.zip';
+    a.download = 'batchimagine_images.zip';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

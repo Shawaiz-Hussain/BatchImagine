@@ -436,7 +436,7 @@ export default function App() {
                     <p className="image-card-prompt">{img.prompt}</p>
                     <div className="image-card-actions">
                       <button
-                        onClick={() => downloadImage(img.url, `batchforge_${i + 1}.jpg`)}
+                        onClick={() => downloadImage(img.url, `batchimagine_${i + 1}.jpg`)}
                         disabled={!img.loaded}
                       >
                         Download

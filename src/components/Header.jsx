@@ -3,9 +3,9 @@ export default function Header({ onOpenSettings }) {
     <header className="app-header">
       <div className="header-inner">
         <a href="/" className="logo">
-          <img src="/logo.png" alt="BatchForge" className="logo-icon-img" />
+          <img src="/logo.png" alt="Batch Imagine" className="logo-icon-img" />
           <span className="logo-text">
-            Batch<span className="accent">Forge</span>
+            Batch<span className="accent">Imagine</span>
           </span>
         </a>
         <button
