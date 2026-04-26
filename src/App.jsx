@@ -303,7 +303,7 @@ export default function App() {
               >
                 {IMAGE_MODELS.map((m, i) => (
                   <option key={m.id} value={i}>
-                    {m.tier} {m.name} ({m.cost} pollen)
+                    {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
                   </option>
                 ))}
               </select>

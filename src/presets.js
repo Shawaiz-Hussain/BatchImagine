@@ -56,15 +56,25 @@ export const STYLE_PRESETS = [
 ];
 
 export const IMAGE_MODELS = [
-  { id: 'flux', name: 'Flux Schnell — Fast high-quality', cost: 0.001, tier: '🟢' },
-  { id: 'zimage', name: 'Z-Image Turbo — Flux + 2× upscale', cost: 0.002, tier: '🟢' },
-  { id: 'gptimage', name: 'GPT Image 1 Mini — OpenAI', cost: 0.008, tier: '🟢' },
-  { id: 'klein', name: 'FLUX.2 Klein 4B — Fast + editing', cost: 0.01, tier: '🟡' },
-  { id: 'gpt-image-2', name: 'GPT Image 2 — OpenAI next-gen', cost: 0.03, tier: '🟡' },
-  { id: 'gptimage-large', name: 'GPT Image 1.5 — OpenAI advanced', cost: 0.032, tier: '🟡' },
-  { id: 'kontext', name: 'FLUX.1 Kontext — In-context editing', cost: 0.04, tier: '🔴' },
-  { id: 'qwen-image', name: 'Qwen Image Plus — Alibaba', cost: 0.045, tier: '🔴' },
-  { id: 'wan-image', name: 'Wan 2.7 Image — Alibaba text-to-image', cost: 0.0525, tier: '🔴' },
+  // ── Free Tier (works with hourly pollen grants) ──
+  { id: 'flux', name: 'Flux Schnell — Fast high-quality', cost: 0.001, tier: '🟢', paidOnly: false },
+  { id: 'zimage', name: 'Z-Image Turbo — Flux + 2× upscale', cost: 0.002, tier: '🟢', paidOnly: false },
+  { id: 'gptimage', name: 'GPT Image 1 Mini — OpenAI', cost: 0.008, tier: '🟢', paidOnly: false },
+  { id: 'klein', name: 'FLUX.2 Klein 4B — Fast + editing', cost: 0.01, tier: '🟢', paidOnly: false },
+  { id: 'gpt-image-2', name: 'GPT Image 2 — OpenAI next-gen', cost: 0.03, tier: '🟡', paidOnly: false },
+  { id: 'gptimage-large', name: 'GPT Image 1.5 — OpenAI advanced', cost: 0.032, tier: '🟡', paidOnly: false },
+  { id: 'kontext', name: 'FLUX.1 Kontext — In-context editing', cost: 0.04, tier: '🟡', paidOnly: false },
+  { id: 'qwen-image', name: 'Qwen Image Plus — Alibaba', cost: 0.045, tier: '🔴', paidOnly: false },
+  { id: 'wan-image', name: 'Wan 2.7 Image — Alibaba (up to 2K)', cost: 0.0525, tier: '🔴', paidOnly: false },
+  // ── Paid Only (requires purchased pollen) ──
+  { id: 'nanobanana', name: 'NanoBanana — Gemini 2.5 Flash', cost: 0.00003, tier: '💎', paidOnly: true },
+  { id: 'nanobanana-2', name: 'NanoBanana 2 — Gemini 3.1 Flash', cost: 0.00006, tier: '💎', paidOnly: true },
+  { id: 'nanobanana-pro', name: 'NanoBanana Pro — Gemini 3 Pro (4K)', cost: 0.00012, tier: '💎', paidOnly: true },
+  { id: 'p-image', name: 'Pruna p-image — Fast generation', cost: 0.0075, tier: '💎', paidOnly: true },
+  { id: 'grok-imagine', name: 'Grok Imagine — xAI', cost: 0.03, tier: '💎', paidOnly: true },
+  { id: 'nova-canvas', name: 'Nova Canvas — Amazon Bedrock', cost: 0.04, tier: '💎', paidOnly: true },
+  { id: 'seedream5', name: 'Seedream 5.0 Lite — ByteDance', cost: 0.0525, tier: '💎', paidOnly: true },
+  { id: 'grok-imagine-pro', name: 'Grok Imagine Pro — xAI Aurora', cost: 0.105, tier: '💎', paidOnly: true },
 ];
 
 export const ASPECT_RATIOS = [
