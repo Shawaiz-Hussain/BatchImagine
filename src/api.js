@@ -96,15 +96,20 @@ function fetchWithTimeout(url, options, timeoutMs = API_TIMEOUT_MS) {
 }
 
 // ─── Prompt Generation via OpenRouter ───
-async function _callOpenRouter(theme, count, styleSuffix, openrouterKey, modelId) {
+async function _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId) {
   // Sanitize inputs
   const cleanTheme = sanitizeTheme(theme);
   if (!cleanTheme) throw new Error('Please enter a valid theme.');
   if (count < 1 || count > 20) throw new Error('Image count must be between 1 and 20.');
 
-  const styleInstruction = styleSuffix
-    ? `\n\nIMPORTANT: Every prompt MUST end with this exact style instruction: "${styleSuffix}"`
-    : '';
+  let styleInstruction = '';
+  if (stylePrefix && styleSuffix) {
+    styleInstruction = `\n\nCRITICAL STYLE REQUIREMENT: Every prompt MUST begin with: "${stylePrefix}" followed by the scene description, and MUST end with: "${styleSuffix}". This style is mandatory and must not be omitted or altered.`;
+  } else if (styleSuffix) {
+    styleInstruction = `\n\nIMPORTANT: Every prompt MUST end with this exact style instruction: "${styleSuffix}"`;
+  } else if (stylePrefix) {
+    styleInstruction = `\n\nIMPORTANT: Every prompt MUST begin with this exact style instruction: "${stylePrefix}"`;
+  }
 
   const systemPrompt = `You are an expert AI image prompt engineer. Given a theme, you generate unique, creative, and highly detailed image generation prompts.
 
@@ -203,6 +208,7 @@ Example output format:
 export async function generatePrompts(
   theme,
   count,
+  stylePrefix,
   styleSuffix,
   openrouterKey,
   llmModel
@@ -210,7 +216,7 @@ export async function generatePrompts(
   const primaryModel = sanitizeModelId(llmModel) || DEFAULT_LLM_MODEL;
 
   try {
-    return await _callOpenRouter(theme, count, styleSuffix, openrouterKey, primaryModel);
+    return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, primaryModel);
   } catch (err) {
     // If the primary model is offline, auto-fallback
     if (
@@ -220,7 +226,7 @@ export async function generatePrompts(
        err.message.includes('does not exist'))
     ) {
       console.warn(`Model "${primaryModel}" unavailable, falling back to ${FALLBACK_LLM_MODEL}`);
-      return await _callOpenRouter(theme, count, styleSuffix, openrouterKey, FALLBACK_LLM_MODEL);
+      return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, FALLBACK_LLM_MODEL);
     }
     throw err;
   }

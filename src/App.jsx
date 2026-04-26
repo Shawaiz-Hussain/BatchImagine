@@ -76,6 +76,7 @@ export default function App() {
       const newPrompts = await generatePrompts(
         theme.trim(),
         count,
+        preset.prefix,
         preset.suffix,
         settings.openrouterKey,
         settings.llmModel
