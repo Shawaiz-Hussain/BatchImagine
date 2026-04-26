@@ -47,15 +47,15 @@ export const STYLE_PRESETS = [
 ];
 
 export const IMAGE_MODELS = [
-  { id: 'nanobanana', name: 'NanoBanana — Gemini 2.5 Flash', cost: 0.00003, tier: '🟢' },
-  { id: 'nanobanana-2', name: 'NanoBanana 2 — Gemini 3.1 Flash', cost: 0.00006, tier: '🟢' },
   { id: 'flux', name: 'Flux Schnell — Fast high-quality', cost: 0.001, tier: '🟢' },
   { id: 'zimage', name: 'Z-Image Turbo — Flux + 2× upscale', cost: 0.002, tier: '🟢' },
-  { id: 'gptimage', name: 'GPT Image 1 Mini — OpenAI', cost: 0.008, tier: '🟡' },
+  { id: 'gptimage', name: 'GPT Image 1 Mini — OpenAI', cost: 0.008, tier: '🟢' },
   { id: 'klein', name: 'FLUX.2 Klein 4B — Fast + editing', cost: 0.01, tier: '🟡' },
-  { id: 'gpt-image-2', name: 'GPT Image 2 — OpenAI next-gen', cost: 0.03, tier: '🔴' },
+  { id: 'gpt-image-2', name: 'GPT Image 2 — OpenAI next-gen', cost: 0.03, tier: '🟡' },
+  { id: 'gptimage-large', name: 'GPT Image 1.5 — OpenAI advanced', cost: 0.032, tier: '🟡' },
   { id: 'kontext', name: 'FLUX.1 Kontext — In-context editing', cost: 0.04, tier: '🔴' },
-  { id: 'seedream5', name: 'Seedream 5.0 Lite — ByteDance', cost: 0.0525, tier: '🔴' },
+  { id: 'qwen-image', name: 'Qwen Image Plus — Alibaba', cost: 0.045, tier: '🔴' },
+  { id: 'wan-image', name: 'Wan 2.7 Image — Alibaba text-to-image', cost: 0.0525, tier: '🔴' },
 ];
 
 export const ASPECT_RATIOS = [
