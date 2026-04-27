@@ -83,7 +83,7 @@ export const ASPECT_RATIOS = [
   { id: 'square', label: 'Square', w: 1024, h: 1024, icon: 'square' },
 ];
 
-export const COUNT_OPTIONS = [2, 4, 6, 8, 12, 16, 24, 32, 50];
+export const COUNT_OPTIONS = [2, 5, 10, 25, 50];
 
 export const LLM_MODELS = [
   // ── Free Tier (works with hourly pollen grants) ──

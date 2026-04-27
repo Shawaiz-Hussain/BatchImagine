@@ -30,7 +30,7 @@ export default function App() {
 
   // Input state
   const [theme, setTheme] = useState('');
-  const [count, setCount] = useState(6);
+  const [count, setCount] = useState(10);
   const [ratioIdx, setRatioIdx] = useState(0);
   const [presetIdx, setPresetIdx] = useState(0);
   const [modelIdx, setModelIdx] = useState(0);

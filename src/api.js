@@ -181,6 +181,7 @@ async function _callPollinations(theme, count, stylePrefix, styleSuffix, pollina
             },
           ],
           temperature: 0.9,
+          seed: Math.floor(Math.random() * 999999999),
         }),
       },
       timeoutMs
@@ -237,14 +238,19 @@ export function buildImageUrl(prompt, width, height, model, pollinationsKey) {
   if (!cleanPrompt) return '';
 
   const encoded = encodeURIComponent(cleanPrompt);
-  const params = new URLSearchParams({
+  const paramObj = {
     width: String(Math.min(Math.max(Number(width) || 512, 256), 4096)),
     height: String(Math.min(Math.max(Number(height) || 512, 256), 4096)),
     model: model || 'flux',
     nologo: 'true',
     seed: String(Math.floor(Math.random() * 999999)),
-    key: pollinationsKey,
-  });
+  };
+  
+  if (pollinationsKey && pollinationsKey.trim()) {
+    paramObj.key = pollinationsKey.trim();
+  }
+  
+  const params = new URLSearchParams(paramObj);
   return `https://gen.pollinations.ai/image/${encoded}?${params.toString()}`;
 }
 
