@@ -14,8 +14,6 @@ export default function Footer() {
         </p>
         <p className="footer-sub">
           Powered by{' '}
-          <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a>
-          {' '}+{' '}
           <a href="https://pollinations.ai" target="_blank" rel="noopener noreferrer">Pollinations.ai</a>
         </p>
       </div>

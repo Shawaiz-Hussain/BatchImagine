@@ -86,26 +86,32 @@ export const ASPECT_RATIOS = [
 export const COUNT_OPTIONS = [2, 4, 6, 8, 12, 16, 24, 32, 50];
 
 export const LLM_MODELS = [
-  // ── Pollinations Free (no API key needed) ──
-  { id: 'openai', name: 'GPT-5.4 Nano — Fast & Balanced', provider: 'pollinations', paidOnly: false },
-  { id: 'openai-fast', name: 'GPT-5 Nano — Ultra Fast', provider: 'pollinations', paidOnly: false },
-  { id: 'gemini-fast', name: 'Gemini 2.5 Flash Lite — Ultra Fast', provider: 'pollinations', paidOnly: false },
-  { id: 'mistral', name: 'Mistral Small 3.2 — Efficient', provider: 'pollinations', paidOnly: false },
-  { id: 'mistral-large', name: 'Mistral Large 3 — Premium Reasoning', provider: 'pollinations', paidOnly: false },
-  { id: 'grok', name: 'Grok 4.1 Fast — High Speed', provider: 'pollinations', paidOnly: false },
-  { id: 'grok-large', name: 'Grok 4.20 — Most Powerful Grok', provider: 'pollinations', paidOnly: false },
-  { id: 'claude-fast', name: 'Claude Haiku 4.5 — Fast & Intelligent', provider: 'pollinations', paidOnly: false },
-  { id: 'kimi', name: 'Kimi K2.5 — Agentic + Reasoning', provider: 'pollinations', paidOnly: false },
-  { id: 'qwen-large', name: 'Qwen 3.6 Plus — 396B Flagship', provider: 'pollinations', paidOnly: false },
-  { id: 'minimax', name: 'MiniMax M2.7 — Multi-Language', provider: 'pollinations', paidOnly: false },
-  { id: 'nova', name: 'Nova 2 Lite — 1M Context', provider: 'pollinations', paidOnly: false },
-  // ── Pollinations Paid (requires purchased pollen) ──
-  { id: 'openai-large', name: 'GPT-5.4 — Most Powerful', provider: 'pollinations', paidOnly: true },
-  { id: 'gemini', name: 'Gemini 3 Flash — Pro-Grade', provider: 'pollinations', paidOnly: true },
-  { id: 'gemini-large', name: 'Gemini 3.1 Pro — Most Intelligent', provider: 'pollinations', paidOnly: true },
-  { id: 'deepseek', name: 'DeepSeek V4 Flash — Reasoning', provider: 'pollinations', paidOnly: true },
-  { id: 'claude', name: 'Claude Sonnet 4.6 — Balanced', provider: 'pollinations', paidOnly: true },
-  { id: 'claude-large', name: 'Claude Opus 4.6 — Most Intelligent', provider: 'pollinations', paidOnly: true },
+  // ── Free Tier (works with hourly pollen grants) ──
+  // Green tier (very low cost)
+  { id: 'openai-fast', name: 'GPT-5 Nano — Ultra Fast', paidOnly: false, cost: 0.0006, tier: '🟢' },
+  { id: 'gemini-fast', name: 'Gemini 2.5 Flash Lite — Ultra Fast', paidOnly: false, cost: 0.00003, tier: '🟢' },
+  { id: 'mistral', name: 'Mistral Small 3.2 — Efficient', paidOnly: false, cost: 0.0002, tier: '🟢' },
+  { id: 'minimax', name: 'MiniMax M2.7 — Multi-Language', paidOnly: false, cost: 0.0001, tier: '🟢' },
+  
+  // Yellow tier (medium cost)
+  { id: 'openai', name: 'GPT-5.4 Nano — Fast & Balanced', paidOnly: false, cost: 0.005, tier: '🟡' },
+  { id: 'claude-fast', name: 'Claude Haiku 4.5 — Fast & Intelligent', paidOnly: false, cost: 0.00125, tier: '🟡' },
+  { id: 'kimi', name: 'Kimi K2.5 — Agentic + Reasoning', paidOnly: false, cost: 0.001, tier: '🟡' },
+  
+  // Red tier (higher cost, free limit reached faster)
+  { id: 'mistral-large', name: 'Mistral Large 3 — Premium Reasoning', paidOnly: false, cost: 0.002, tier: '🔴' },
+  { id: 'grok', name: 'Grok 4.1 Fast — High Speed', paidOnly: false, cost: 0.002, tier: '🔴' },
+  { id: 'grok-large', name: 'Grok 4.20 — Most Powerful Grok', paidOnly: false, cost: 0.01, tier: '🔴' },
+  { id: 'qwen-large', name: 'Qwen 3.6 Plus — 396B Flagship', paidOnly: false, cost: 0.0015, tier: '🔴' },
+  { id: 'nova', name: 'Nova 2 Lite — 1M Context', paidOnly: false, cost: 0.0006, tier: '🔴' },
+
+  // ── Paid Only (requires purchased pollen) ──
+  { id: 'openai-large', name: 'GPT-5.4 — Most Powerful', paidOnly: true, cost: 0.015, tier: '💎' },
+  { id: 'gemini', name: 'Gemini 3 Flash — Pro-Grade', paidOnly: true, cost: 0.00008, tier: '💎' },
+  { id: 'gemini-large', name: 'Gemini 3.1 Pro — Most Intelligent', paidOnly: true, cost: 0.002, tier: '💎' },
+  { id: 'deepseek', name: 'DeepSeek V4 Flash — Reasoning', paidOnly: true, cost: 0.0002, tier: '💎' },
+  { id: 'claude', name: 'Claude Sonnet 4.6 — Balanced', paidOnly: true, cost: 0.015, tier: '💎' },
+  { id: 'claude-large', name: 'Claude Opus 4.6 — Most Intelligent', paidOnly: true, cost: 0.075, tier: '💎' },
 ];
 
 export const DEFAULT_LLM_IDX = 0; // GPT-5.4 Nano

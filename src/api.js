@@ -9,17 +9,12 @@ const LARGE_BATCH_TIMEOUT_MS = 60000;
 
 // ─── Storage helpers ───
 const KEYS = {
-  openrouter: 'bf_openrouter_key',
   pollinations: 'bf_pollinations_key',
   llmModelIdx: 'bf_llm_model_idx',
 };
 
 export function loadSettings() {
   return {
-    openrouterKey:
-      sanitizeKey(localStorage.getItem(KEYS.openrouter)) ||
-      sanitizeKey(import.meta.env.VITE_OPENROUTER_KEY) ||
-      '',
     pollinationsKey:
       sanitizeKey(localStorage.getItem(KEYS.pollinations)) ||
       sanitizeKey(import.meta.env.VITE_POLLINATIONS_KEY) ||
@@ -28,12 +23,8 @@ export function loadSettings() {
   };
 }
 
-export function saveSettings({ openrouterKey, pollinationsKey, llmModelIdx }) {
-  const cleanOR = sanitizeKey(openrouterKey);
+export function saveSettings({ pollinationsKey, llmModelIdx }) {
   const cleanPoll = sanitizeKey(pollinationsKey);
-
-  if (cleanOR) localStorage.setItem(KEYS.openrouter, cleanOR);
-  else localStorage.removeItem(KEYS.openrouter);
 
   if (cleanPoll) localStorage.setItem(KEYS.pollinations, cleanPoll);
   else localStorage.removeItem(KEYS.pollinations);
@@ -70,11 +61,6 @@ export function validateSettings(settings) {
   // Pollinations key is needed for paid LLM or paid image models
   if (!settings.pollinationsKey) {
     errors.push('Pollinations API key is recommended for best results.');
-  }
-
-  // OpenRouter key only needed if using an OpenRouter LLM model
-  if (llm.provider === 'openrouter' && !settings.openrouterKey) {
-    errors.push('OpenRouter API key is required for the selected LLM model.');
   }
 
   return errors;
@@ -230,72 +216,6 @@ async function _callPollinations(theme, count, stylePrefix, styleSuffix, pollina
   return _parsePrompts(raw, count);
 }
 
-// ─── Prompt Generation via OpenRouter ───
-async function _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId) {
-  const cleanTheme = sanitizeTheme(theme);
-  if (!cleanTheme) throw new Error('Please enter a valid theme.');
-  if (count < 1 || count > 50) throw new Error('Image count must be between 1 and 50.');
-
-  const systemPrompt = _buildSystemPrompt(count, stylePrefix, styleSuffix);
-  const timeoutMs = count > 16 ? LARGE_BATCH_TIMEOUT_MS : API_TIMEOUT_MS;
-
-  let response;
-  try {
-    response = await fetchWithTimeout(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${openrouterKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-OpenRouter-Title': 'BatchForge',
-        },
-        body: JSON.stringify({
-          model: sanitizeModelId(modelId),
-          messages: [
-            { role: 'system', content: systemPrompt },
-            {
-              role: 'user',
-              content: `Theme: "${cleanTheme}"\n\nGenerate exactly ${count} unique image prompts for this theme.`,
-            },
-          ],
-          temperature: 0.9,
-        }),
-      },
-      timeoutMs
-    );
-  } catch (err) {
-    if (err.message.includes('timed out')) throw err;
-    throw new Error('Failed to connect to OpenRouter. Check your internet connection.', { cause: err });
-  }
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    const msg = err?.error?.message || '';
-
-    if (response.status === 401) {
-      throw new Error('Invalid OpenRouter API key. Check your key in Settings.');
-    }
-    if (response.status === 429) {
-      throw new Error('Rate limited by OpenRouter. Please wait a moment and try again.');
-    }
-    if (response.status === 402) {
-      throw new Error('Insufficient credits on OpenRouter. Add credits or switch to a free model.');
-    }
-    throw new Error(msg || `OpenRouter error (${response.status}). Please try again.`);
-  }
-
-  const data = await response.json();
-  const raw = data.choices?.[0]?.message?.content || '';
-
-  if (!raw.trim()) {
-    throw new Error('Empty response from OpenRouter. Try again or switch models.');
-  }
-
-  return _parsePrompts(raw, count);
-}
-
 // ─── Main entry point ───
 export async function generatePrompts(
   theme,
@@ -303,17 +223,11 @@ export async function generatePrompts(
   stylePrefix,
   styleSuffix,
   llmModel,
-  openrouterKey,
   pollinationsKey
 ) {
-  const { id: modelId, provider, paidOnly } = llmModel;
+  const { id: modelId, paidOnly } = llmModel;
 
-  if (provider === 'pollinations') {
-    return await _callPollinations(theme, count, stylePrefix, styleSuffix, pollinationsKey, modelId, paidOnly);
-  } else {
-    // OpenRouter
-    return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId);
-  }
+  return await _callPollinations(theme, count, stylePrefix, styleSuffix, pollinationsKey, modelId, paidOnly);
 }
 
 // ─── Image Generation via Pollinations ───

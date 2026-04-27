@@ -11,7 +11,6 @@ export default function SettingsModal({ settings, onSave, onClose }) {
   }, [onClose]);
 
   const selectedLlm = LLM_MODELS[local.llmModelIdx] || LLM_MODELS[0];
-  const needsOpenRouter = selectedLlm.provider === 'openrouter';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -36,16 +35,14 @@ export default function SettingsModal({ settings, onSave, onClose }) {
             >
               {LLM_MODELS.map((m, i) => (
                 <option key={m.id} value={i}>
-                  {m.paidOnly ? '💎' : '🟢'} {m.name}{m.paidOnly ? ' · Paid' : ''}
+                  {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
                 </option>
               ))}
             </select>
             <small>
-              {selectedLlm.provider === 'pollinations'
-                ? selectedLlm.paidOnly
-                  ? 'Requires purchased pollen'
-                  : 'Free — uses Pollinations AI, no extra key needed'
-                : 'Requires OpenRouter API key'}
+              {selectedLlm.paidOnly
+                ? 'Requires purchased pollen'
+                : 'Free — uses Pollinations AI, no extra key needed'}
             </small>
           </div>
 
@@ -69,26 +66,7 @@ export default function SettingsModal({ settings, onSave, onClose }) {
             </small>
           </div>
 
-          {/* OpenRouter API Key — only shown when needed */}
-          {needsOpenRouter && (
-            <div className="form-group">
-              <label htmlFor="or-key">OpenRouter API Key</label>
-              <input
-                id="or-key"
-                type="password"
-                value={local.openrouterKey}
-                onChange={(e) =>
-                  setLocal((s) => ({ ...s, openrouterKey: e.target.value }))
-                }
-                placeholder="sk-or-v1-..."
-              />
-              <small>
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">
-                  Get your key
-                </a>
-              </small>
-            </div>
-          )}
+
         </div>
         <div className="modal-footer">
           <button className="btn-primary" onClick={() => onSave(local)}>

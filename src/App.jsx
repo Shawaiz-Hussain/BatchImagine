@@ -51,9 +51,7 @@ export default function App() {
   const model = IMAGE_MODELS[modelIdx];
 
   const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[DEFAULT_LLM_IDX];
-  const hasKeys = llm.provider === 'openrouter'
-    ? settings.openrouterKey && settings.pollinationsKey
-    : true; // Pollinations free models don't need any key
+  const hasKeys = true; // No required keys anymore (Pollinations free works without)
 
   // ── Save settings ──
   const handleSaveSettings = useCallback((s) => {
@@ -65,10 +63,6 @@ export default function App() {
   // ── Full generate pipeline ──
   const handleGenerate = useCallback(async () => {
     if (!theme.trim()) return;
-    if (!hasKeys) {
-      setShowSettings(true);
-      return;
-    }
 
     abortRef.current = false;
     setPhase('prompts');
@@ -84,7 +78,6 @@ export default function App() {
         preset.prefix,
         preset.suffix,
         llm,
-        settings.openrouterKey,
         settings.pollinationsKey
       );
       if (abortRef.current) return;
