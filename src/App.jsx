@@ -4,6 +4,8 @@ import {
   IMAGE_MODELS,
   ASPECT_RATIOS,
   COUNT_OPTIONS,
+  LLM_MODELS,
+  DEFAULT_LLM_IDX,
 } from './presets';
 import {
   loadSettings,
@@ -48,7 +50,10 @@ export default function App() {
   const preset = STYLE_PRESETS[presetIdx];
   const model = IMAGE_MODELS[modelIdx];
 
-  const hasKeys = settings.openrouterKey && settings.pollinationsKey;
+  const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[DEFAULT_LLM_IDX];
+  const hasKeys = llm.provider === 'openrouter'
+    ? settings.openrouterKey && settings.pollinationsKey
+    : true; // Pollinations free models don't need any key
 
   // ── Save settings ──
   const handleSaveSettings = useCallback((s) => {
@@ -78,8 +83,9 @@ export default function App() {
         count,
         preset.prefix,
         preset.suffix,
+        llm,
         settings.openrouterKey,
-        settings.llmModel
+        settings.pollinationsKey
       );
       if (abortRef.current) return;
       setPrompts(newPrompts);
@@ -230,7 +236,7 @@ export default function App() {
               rows={2}
               maxLength={500}
               value={theme}
-              onChange={(e) => setTheme(sanitizeTheme(e.target.value))}
+              onChange={(e) => setTheme(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

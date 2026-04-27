@@ -1,15 +1,17 @@
-import { DEFAULT_LLM_MODEL, FALLBACK_LLM_MODEL } from './presets';
+import { LLM_MODELS, DEFAULT_LLM_IDX } from './presets';
+import JSZip from 'jszip';
 
 // ─── Constants ───
 const MAX_THEME_LENGTH = 500;
 const MAX_PROMPT_LENGTH = 1000;
 const API_TIMEOUT_MS = 30000;
+const LARGE_BATCH_TIMEOUT_MS = 60000;
 
 // ─── Storage helpers ───
 const KEYS = {
   openrouter: 'bf_openrouter_key',
   pollinations: 'bf_pollinations_key',
-  llmModel: 'bf_llm_model',
+  llmModelIdx: 'bf_llm_model_idx',
 };
 
 export function loadSettings() {
@@ -22,15 +24,13 @@ export function loadSettings() {
       sanitizeKey(localStorage.getItem(KEYS.pollinations)) ||
       sanitizeKey(import.meta.env.VITE_POLLINATIONS_KEY) ||
       '',
-    llmModel:
-      sanitizeModelId(localStorage.getItem(KEYS.llmModel)) || DEFAULT_LLM_MODEL,
+    llmModelIdx: Number(localStorage.getItem(KEYS.llmModelIdx)) || DEFAULT_LLM_IDX,
   };
 }
 
-export function saveSettings({ openrouterKey, pollinationsKey, llmModel }) {
+export function saveSettings({ openrouterKey, pollinationsKey, llmModelIdx }) {
   const cleanOR = sanitizeKey(openrouterKey);
   const cleanPoll = sanitizeKey(pollinationsKey);
-  const cleanModel = sanitizeModelId(llmModel);
 
   if (cleanOR) localStorage.setItem(KEYS.openrouter, cleanOR);
   else localStorage.removeItem(KEYS.openrouter);
@@ -38,7 +38,7 @@ export function saveSettings({ openrouterKey, pollinationsKey, llmModel }) {
   if (cleanPoll) localStorage.setItem(KEYS.pollinations, cleanPoll);
   else localStorage.removeItem(KEYS.pollinations);
 
-  if (cleanModel) localStorage.setItem(KEYS.llmModel, cleanModel);
+  localStorage.setItem(KEYS.llmModelIdx, String(llmModelIdx ?? DEFAULT_LLM_IDX));
 }
 
 // ─── Input Sanitization ───
@@ -65,14 +65,18 @@ export function sanitizeTheme(value) {
 
 export function validateSettings(settings) {
   const errors = [];
-  if (!settings.openrouterKey) {
-    errors.push('OpenRouter API key is required.');
-  } else if (!settings.openrouterKey.startsWith('sk-or-')) {
-    errors.push('OpenRouter key should start with "sk-or-".');
-  }
+  const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[DEFAULT_LLM_IDX];
+
+  // Pollinations key is needed for paid LLM or paid image models
   if (!settings.pollinationsKey) {
-    errors.push('Pollinations API key is required.');
+    errors.push('Pollinations API key is recommended for best results.');
   }
+
+  // OpenRouter key only needed if using an OpenRouter LLM model
+  if (llm.provider === 'openrouter' && !settings.openrouterKey) {
+    errors.push('OpenRouter API key is required for the selected LLM model.');
+  }
+
   return errors;
 }
 
@@ -95,13 +99,8 @@ function fetchWithTimeout(url, options, timeoutMs = API_TIMEOUT_MS) {
     });
 }
 
-// ─── Prompt Generation via OpenRouter ───
-async function _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId) {
-  // Sanitize inputs
-  const cleanTheme = sanitizeTheme(theme);
-  if (!cleanTheme) throw new Error('Please enter a valid theme.');
-  if (count < 1 || count > 20) throw new Error('Image count must be between 1 and 20.');
-
+// ─── Build system prompt ───
+function _buildSystemPrompt(count, stylePrefix, styleSuffix) {
   let styleInstruction = '';
   if (stylePrefix && styleSuffix) {
     styleInstruction = `\n\nCRITICAL STYLE REQUIREMENT: Every prompt MUST begin with: "${stylePrefix}" followed by the scene description, and MUST end with: "${styleSuffix}". This style is mandatory and must not be omitted or altered.`;
@@ -111,7 +110,7 @@ async function _callOpenRouter(theme, count, stylePrefix, styleSuffix, openroute
     styleInstruction = `\n\nIMPORTANT: Every prompt MUST begin with this exact style instruction: "${stylePrefix}"`;
   }
 
-  const systemPrompt = `You are an expert AI image prompt engineer. Given a theme, you generate unique, creative, and highly detailed image generation prompts.
+  return `You are an expert AI image prompt engineer. Given a theme, you generate unique, creative, and highly detailed image generation prompts.
 
 Rules:
 - Generate EXACTLY ${count} prompts
@@ -123,19 +122,69 @@ Rules:
 
 Example output format:
 ["a detailed prompt here", "another detailed prompt here"]`;
+}
+
+// ─── Parse response ───
+function _parsePrompts(raw, count) {
+  // Try to extract JSON array from response
+  const jsonMatch = raw.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((p) => String(p).trim()).filter(Boolean).slice(0, count);
+      }
+    } catch {
+      // Fall through to line-based fallback
+    }
+  }
+
+  // Fallback: split by newlines
+  const lines = raw
+    .split('\n')
+    .map((l) => l.replace(/^\d+[\.\)]\s*/, '').replace(/^["']|["']$/g, '').trim())
+    .filter((l) => l.length > 15);
+
+  if (lines.length > 0) {
+    return lines.slice(0, count);
+  }
+
+  throw new Error(
+    'Could not parse prompts from AI response. Try again or switch to a different model.'
+  );
+}
+
+// ─── Prompt Generation via Pollinations ───
+async function _callPollinations(theme, count, stylePrefix, styleSuffix, pollinationsKey, modelId, isPaid) {
+  const cleanTheme = sanitizeTheme(theme);
+  if (!cleanTheme) throw new Error('Please enter a valid theme.');
+  if (count < 1 || count > 50) throw new Error('Image count must be between 1 and 50.');
+
+  const systemPrompt = _buildSystemPrompt(count, stylePrefix, styleSuffix);
+  const timeoutMs = count > 16 ? LARGE_BATCH_TIMEOUT_MS : API_TIMEOUT_MS;
+
+  // Unified endpoint for both free and paid text models
+  const headers = { 'Content-Type': 'application/json' };
+  
+  if (isPaid) {
+    if (!pollinationsKey) {
+      throw new Error('Pollinations API key is required for paid models. Add your key in Settings.');
+    }
+  }
+  
+  if (pollinationsKey) {
+    headers['Authorization'] = `Bearer ${pollinationsKey}`;
+  }
+
+  const apiUrl = 'https://gen.pollinations.ai/v1/chat/completions';
 
   let response;
   try {
     response = await fetchWithTimeout(
-      'https://openrouter.ai/api/v1/chat/completions',
+      apiUrl,
       {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${openrouterKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-OpenRouter-Title': 'Batch Imagine',
-        },
+        headers,
         body: JSON.stringify({
           model: modelId,
           messages: [
@@ -147,7 +196,74 @@ Example output format:
           ],
           temperature: 0.9,
         }),
-      }
+      },
+      timeoutMs
+    );
+  } catch (err) {
+    if (err.message.includes('timed out')) throw err;
+    throw new Error('Failed to connect to Pollinations. Check your internet connection.', { cause: err });
+  }
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    const msg = errData?.error?.message || '';
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Invalid or missing Pollinations API key. Check your key in Settings.');
+    }
+    if (response.status === 429) {
+      throw new Error('Rate limited by Pollinations. Please wait a moment and try again.');
+    }
+    if (response.status === 402) {
+      throw new Error('Insufficient pollen. Purchase pollen or switch to a free model.');
+    }
+    throw new Error(msg || `Pollinations error (${response.status}). Please try again.`);
+  }
+
+  const data = await response.json();
+  const raw = data.choices?.[0]?.message?.content || '';
+
+  if (!raw.trim()) {
+    throw new Error('Empty response from Pollinations. Try again or switch models.');
+  }
+
+  return _parsePrompts(raw, count);
+}
+
+// ─── Prompt Generation via OpenRouter ───
+async function _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId) {
+  const cleanTheme = sanitizeTheme(theme);
+  if (!cleanTheme) throw new Error('Please enter a valid theme.');
+  if (count < 1 || count > 50) throw new Error('Image count must be between 1 and 50.');
+
+  const systemPrompt = _buildSystemPrompt(count, stylePrefix, styleSuffix);
+  const timeoutMs = count > 16 ? LARGE_BATCH_TIMEOUT_MS : API_TIMEOUT_MS;
+
+  let response;
+  try {
+    response = await fetchWithTimeout(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openrouterKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-OpenRouter-Title': 'BatchForge',
+        },
+        body: JSON.stringify({
+          model: sanitizeModelId(modelId),
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Theme: "${cleanTheme}"\n\nGenerate exactly ${count} unique image prompts for this theme.`,
+            },
+          ],
+          temperature: 0.9,
+        }),
+      },
+      timeoutMs
     );
   } catch (err) {
     if (err.message.includes('timed out')) throw err;
@@ -174,61 +290,29 @@ Example output format:
   const raw = data.choices?.[0]?.message?.content || '';
 
   if (!raw.trim()) {
-    throw new Error('The AI returned an empty response. Try again or switch models.');
+    throw new Error('Empty response from OpenRouter. Try again or switch models.');
   }
 
-  // Parse JSON from the response, handling markdown code fences
-  let cleaned = raw.trim();
-  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-  cleaned = cleaned.trim();
-
-  try {
-    const prompts = JSON.parse(cleaned);
-    if (Array.isArray(prompts) && prompts.length > 0) {
-      return prompts
-        .map((p) => String(p).trim().slice(0, MAX_PROMPT_LENGTH))
-        .filter((p) => p.length > 0)
-        .slice(0, count);
-    }
-    throw new Error('Parsed result is not an array');
-  } catch {
-    // Fallback: extract quoted strings
-    const matches = [...cleaned.matchAll(/"([^"]{10,})"/g)].map((m) => m[1]);
-    if (matches.length > 0) {
-      return matches
-        .map((p) => p.trim().slice(0, MAX_PROMPT_LENGTH))
-        .slice(0, count);
-    }
-    throw new Error(
-      'Could not parse prompts from AI response. Try again or switch to a different model.'
-    );
-  }
+  return _parsePrompts(raw, count);
 }
 
+// ─── Main entry point ───
 export async function generatePrompts(
   theme,
   count,
   stylePrefix,
   styleSuffix,
+  llmModel,
   openrouterKey,
-  llmModel
+  pollinationsKey
 ) {
-  const primaryModel = sanitizeModelId(llmModel) || DEFAULT_LLM_MODEL;
+  const { id: modelId, provider, paidOnly } = llmModel;
 
-  try {
-    return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, primaryModel);
-  } catch (err) {
-    // If the primary model is offline, auto-fallback
-    if (
-      primaryModel !== FALLBACK_LLM_MODEL &&
-      (err.message.includes('No endpoints') ||
-       err.message.includes('not available') ||
-       err.message.includes('does not exist'))
-    ) {
-      console.warn(`Model "${primaryModel}" unavailable, falling back to ${FALLBACK_LLM_MODEL}`);
-      return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, FALLBACK_LLM_MODEL);
-    }
-    throw err;
+  if (provider === 'pollinations') {
+    return await _callPollinations(theme, count, stylePrefix, styleSuffix, pollinationsKey, modelId, paidOnly);
+  } else {
+    // OpenRouter
+    return await _callOpenRouter(theme, count, stylePrefix, styleSuffix, openrouterKey, modelId);
   }
 }
 
@@ -273,45 +357,40 @@ export async function downloadImage(url, filename) {
 export async function downloadAllAsZip(images) {
   if (!images || images.length === 0) return;
 
-  if (!window.JSZip) {
-    alert('ZIP library not loaded. Please refresh the page and try again.');
-    return;
-  }
+  try {
+    const zip = new JSZip();
 
-  const zip = new window.JSZip();
-  let successCount = 0;
-
-  await Promise.all(
-    images.map(async (img, i) => {
-      try {
+    const results = await Promise.allSettled(
+      images.map(async (img, i) => {
+        if (!img.url || img.error) return null;
         const res = await fetchWithTimeout(img.url, {}, 60000);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) return null;
         const blob = await res.blob();
         const ext = blob.type.includes('png') ? 'png' : 'jpg';
-        zip.file(`image_${i + 1}.${ext}`, blob);
-        successCount++;
-      } catch (e) {
-        console.error(`Failed to fetch image ${i + 1}:`, e);
-      }
-    })
-  );
+        zip.file(`batchforge_${String(i + 1).padStart(3, '0')}.${ext}`, blob);
+        return true;
+      })
+    );
 
-  if (successCount === 0) {
-    alert('Could not download any images. They may still be generating.');
-    return;
-  }
+    const added = results.filter(
+      (r) => r.status === 'fulfilled' && r.value
+    ).length;
 
-  try {
-    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    if (added === 0) {
+      alert('No images could be downloaded. They may still be generating.');
+      return;
+    }
+
+    const content = await zip.generateAsync({ type: 'blob' });
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = 'batchimagine_images.zip';
+    a.href = URL.createObjectURL(content);
+    a.download = `batchforge_${Date.now()}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
-  } catch (e) {
-    console.error('ZIP generation failed:', e);
-    alert('Failed to create ZIP file. Try downloading images individually.');
+  } catch (err) {
+    console.error('ZIP download failed:', err);
+    alert('Failed to create ZIP. Some images may still be generating.');
   }
 }

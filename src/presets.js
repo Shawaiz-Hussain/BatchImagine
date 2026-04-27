@@ -83,7 +83,29 @@ export const ASPECT_RATIOS = [
   { id: 'square', label: 'Square', w: 1024, h: 1024, icon: 'square' },
 ];
 
-export const COUNT_OPTIONS = [2, 4, 6, 8, 12, 16];
+export const COUNT_OPTIONS = [2, 4, 6, 8, 12, 16, 24, 32, 50];
 
-export const DEFAULT_LLM_MODEL = 'meta-llama/llama-3.1-8b-instruct';
-export const FALLBACK_LLM_MODEL = 'openrouter/free';
+export const LLM_MODELS = [
+  // ── Pollinations Free (no API key needed) ──
+  { id: 'openai', name: 'GPT-5.4 Nano — Fast & Balanced', provider: 'pollinations', paidOnly: false },
+  { id: 'openai-fast', name: 'GPT-5 Nano — Ultra Fast', provider: 'pollinations', paidOnly: false },
+  { id: 'gemini-fast', name: 'Gemini 2.5 Flash Lite — Ultra Fast', provider: 'pollinations', paidOnly: false },
+  { id: 'mistral', name: 'Mistral Small 3.2 — Efficient', provider: 'pollinations', paidOnly: false },
+  { id: 'mistral-large', name: 'Mistral Large 3 — Premium Reasoning', provider: 'pollinations', paidOnly: false },
+  { id: 'grok', name: 'Grok 4.1 Fast — High Speed', provider: 'pollinations', paidOnly: false },
+  { id: 'grok-large', name: 'Grok 4.20 — Most Powerful Grok', provider: 'pollinations', paidOnly: false },
+  { id: 'claude-fast', name: 'Claude Haiku 4.5 — Fast & Intelligent', provider: 'pollinations', paidOnly: false },
+  { id: 'kimi', name: 'Kimi K2.5 — Agentic + Reasoning', provider: 'pollinations', paidOnly: false },
+  { id: 'qwen-large', name: 'Qwen 3.6 Plus — 396B Flagship', provider: 'pollinations', paidOnly: false },
+  { id: 'minimax', name: 'MiniMax M2.7 — Multi-Language', provider: 'pollinations', paidOnly: false },
+  { id: 'nova', name: 'Nova 2 Lite — 1M Context', provider: 'pollinations', paidOnly: false },
+  // ── Pollinations Paid (requires purchased pollen) ──
+  { id: 'openai-large', name: 'GPT-5.4 — Most Powerful', provider: 'pollinations', paidOnly: true },
+  { id: 'gemini', name: 'Gemini 3 Flash — Pro-Grade', provider: 'pollinations', paidOnly: true },
+  { id: 'gemini-large', name: 'Gemini 3.1 Pro — Most Intelligent', provider: 'pollinations', paidOnly: true },
+  { id: 'deepseek', name: 'DeepSeek V4 Flash — Reasoning', provider: 'pollinations', paidOnly: true },
+  { id: 'claude', name: 'Claude Sonnet 4.6 — Balanced', provider: 'pollinations', paidOnly: true },
+  { id: 'claude-large', name: 'Claude Opus 4.6 — Most Intelligent', provider: 'pollinations', paidOnly: true },
+];
+
+export const DEFAULT_LLM_IDX = 0; // GPT-5.4 Nano
