@@ -33,7 +33,7 @@ export default function Header({ onOpenSettings, pollen, onRefreshBalance }) {
             ) : (
               <div className="pollen-value-wrap">
                 <div className="pollen-label">Status</div>
-                <span className="pollen-unit">Anonymous (Free)</span>
+                <span className="pollen-unit" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>Not Connected</span>
               </div>
             )}
           </div>
