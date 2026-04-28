@@ -21,6 +21,7 @@ import {
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
 import Lightbox from './components/Lightbox';
+import CustomSelect from './components/CustomSelect';
 import Footer from './components/Footer';
 
 // ─────────────────────────────────────────
@@ -268,89 +269,66 @@ export default function App() {
           </div>
 
           {/* Toolbar */}
-          <div className="toolbar">
-            <div className="toolbar-group">
-              <label className="toolbar-label">Count</label>
-              <div className="pill-group">
-                {COUNT_OPTIONS.map((n) => (
-                  <button
-                    key={n}
-                    className={`pill${count === n ? ' active' : ''}`}
-                    onClick={() => setCount(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
+          <div className="toolbar-rows">
+            <div className="toolbar-row">
+              <div className="toolbar-group">
+                <label className="toolbar-label">Count</label>
+                <div className="pill-group">
+                  {COUNT_OPTIONS.map((n) => (
+                    <button
+                      key={n}
+                      className={`pill${count === n ? ' active' : ''}`}
+                      onClick={() => setCount(n)}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="toolbar-group">
+                <label className="toolbar-label">Ratio</label>
+                <div className="pill-group">
+                  {ASPECT_RATIOS.map((r, i) => (
+                    <button
+                      key={r.id}
+                      className={`pill${ratioIdx === i ? ' active' : ''}`}
+                      onClick={() => setRatioIdx(i)}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="toolbar-group toolbar-group-grow">
+                <label className="toolbar-label">Style</label>
+                <CustomSelect
+                  options={STYLE_PRESETS}
+                  value={presetIdx}
+                  onChange={setPresetIdx}
+                />
               </div>
             </div>
 
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group">
-              <label className="toolbar-label">Ratio</label>
-              <div className="pill-group">
-                {ASPECT_RATIOS.map((r, i) => (
-                  <button
-                    key={r.id}
-                    className={`pill${ratioIdx === i ? ' active' : ''}`}
-                    onClick={() => setRatioIdx(i)}
-                  >
-                    <span className={`ratio-icon ${r.icon}`} />
-                    {r.label}
-                  </button>
-                ))}
+            <div className="toolbar-row">
+              <div className="toolbar-group toolbar-group-grow">
+                <label className="toolbar-label">Prompt AI Model</label>
+                <CustomSelect
+                  options={LLM_MODELS}
+                  value={settings.llmModelIdx}
+                  onChange={handleLlmChange}
+                />
               </div>
-            </div>
 
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group">
-              <label className="toolbar-label">Style</label>
-              <select
-                className="styled-select"
-                value={presetIdx}
-                onChange={(e) => setPresetIdx(Number(e.target.value))}
-              >
-                {STYLE_PRESETS.map((p, i) => (
-                  <option key={p.id} value={i}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group toolbar-group-grow">
-              <label className="toolbar-label">Prompt AI Model</label>
-              <select
-                className="styled-select"
-                value={settings.llmModelIdx}
-                onChange={(e) => handleLlmChange(Number(e.target.value))}
-              >
-                {LLM_MODELS.map((m, i) => (
-                  <option key={m.id} value={i}>
-                    {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group toolbar-group-grow">
-              <label className="toolbar-label">Image AI Model</label>
-              <select
-                className="styled-select"
-                value={modelIdx}
-                onChange={(e) => setModelIdx(Number(e.target.value))}
-              >
-                {IMAGE_MODELS.map((m, i) => (
-                  <option key={m.id} value={i}>
-                    {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
-                  </option>
-                ))}
-              </select>
+              <div className="toolbar-group toolbar-group-grow">
+                <label className="toolbar-label">Image AI Model</label>
+                <CustomSelect
+                  options={IMAGE_MODELS}
+                  value={modelIdx}
+                  onChange={setModelIdx}
+                />
+              </div>
             </div>
           </div>
 
@@ -478,16 +456,16 @@ export default function App() {
                     />
                   </div>
                   <div className="image-card-body">
-                    <p className="image-card-prompt">{img.prompt}</p>
                     <div className="image-card-actions">
                       <button
+                        className="btn-pill"
                         onClick={() => downloadImage(img.url, `batchimagine_${i + 1}.jpg`)}
                         disabled={!img.loaded}
                       >
                         Download
                       </button>
-                      <button onClick={() => handleRetry(i)}>Regen</button>
-                      <button onClick={() => navigator.clipboard.writeText(img.prompt)}>
+                      <button className="btn-pill" onClick={() => handleRetry(i)}>Regen</button>
+                      <button className="btn-pill" onClick={() => navigator.clipboard.writeText(img.prompt)}>
                         Copy
                       </button>
                     </div>
@@ -497,6 +475,32 @@ export default function App() {
             </div>
           </section>
         )}
+        {/* ── How It Works ── */}
+        <section className="how-it-works-section" style={{ marginTop: '60px' }}>
+          <h2 className="how-it-works-title">How It Works</h2>
+          <div className="how-it-works">
+            <div className="how-step how-step-1">
+              <span className="how-step-icon">✏️</span>
+              <p><strong>1.</strong> Describe your vision in the prompt box.</p>
+            </div>
+            <div className="how-step how-step-2">
+              <span className="how-step-icon">⚙️</span>
+              <p><strong>2.</strong> Choose your settings (Count, Ratio, Style).</p>
+            </div>
+            <div className="how-step how-step-3">
+              <span className="how-step-icon">🤖</span>
+              <p><strong>3.</strong> Select your model for unique prompts generation.</p>
+            </div>
+            <div className="how-step how-step-4">
+              <span className="how-step-icon">🖼️</span>
+              <p><strong>4.</strong> Select your model for image generation.</p>
+            </div>
+            <div className="how-step how-step-5 how-step-full">
+              <span className="how-step-icon">🚀</span>
+              <p><strong>5.</strong> Generate and download your batch.</p>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
