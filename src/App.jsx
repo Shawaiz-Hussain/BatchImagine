@@ -232,6 +232,7 @@ export default function App() {
       <Header 
         onOpenSettings={() => setShowSettings(true)} 
         pollen={pollen}
+        onRefreshBalance={refreshBalance}
       />
 
       <main className="app-main">

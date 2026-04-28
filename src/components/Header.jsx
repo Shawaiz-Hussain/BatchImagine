@@ -1,4 +1,4 @@
-export default function Header({ onOpenSettings, pollen }) {
+export default function Header({ onOpenSettings, pollen, onRefreshBalance }) {
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -14,15 +14,20 @@ export default function Header({ onOpenSettings, pollen }) {
         <div className="header-right">
           <div className="pollen-balance">
             {pollen && typeof pollen === 'object' ? (
-              <div className="pollen-dual-wrap">
-                <div className="pollen-segment pollen-segment-credit" title="Purchased Credits">
+              <div 
+                className="pollen-dual-wrap" 
+                onClick={onRefreshBalance} 
+                style={{ cursor: 'pointer' }}
+                title="Click to refresh balance"
+              >
+                <div className="pollen-segment pollen-segment-credit">
                   <span className="pollen-icon">🌸</span>
-                  <span className="pollen-amount">{(pollen.credit ?? 0).toFixed(2)}</span>
+                  <span className="pollen-amount">{(Number(pollen.credit ?? 0)).toFixed(3)}</span>
                 </div>
                 <div className="pollen-divider" />
-                <div className="pollen-segment pollen-segment-grant" title="Free Allowance">
+                <div className="pollen-segment pollen-segment-grant">
                   <span className="pollen-icon">🌱</span>
-                  <span className="pollen-amount">{(pollen.grant ?? 0).toFixed(2)}</span>
+                  <span className="pollen-amount">{(Number(pollen.grant ?? pollen.balance ?? 0)).toFixed(3)}</span>
                 </div>
               </div>
             ) : (
