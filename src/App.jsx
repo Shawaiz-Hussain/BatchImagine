@@ -123,20 +123,36 @@ export default function App() {
     setPhase('images');
     setLoadedCount(0);
 
-    const newImages = promptList.map((prompt) => ({
-      url: buildImageUrl(
-        prompt,
-        ratio.w,
-        ratio.h,
-        model.id,
-        settings.pollinationsKey
-      ),
+    // Initialize without URLs first
+    const initialImages = promptList.map((prompt) => ({
+      url: null,
       prompt,
       loaded: false,
       error: false,
     }));
-    setImages(newImages);
-    setStatusText(`Generating images… 0 / ${newImages.length}`);
+    setImages(initialImages);
+    setStatusText(`Preparing batch… 0 / ${promptList.length}`);
+
+    // Stagger the loading to prevent overwhelming the server
+    promptList.forEach((prompt, i) => {
+      setTimeout(() => {
+        const url = buildImageUrl(
+          prompt,
+          ratio.w,
+          ratio.h,
+          model.id,
+          settings.pollinationsKey
+        );
+        setImages((prev) => {
+          const next = [...prev];
+          if (next[i]) {
+            next[i] = { ...next[i], url };
+          }
+          return next;
+        });
+        setStatusText(`Generating images… ${i + 1} / ${promptList.length}`);
+      }, i * 300); // 300ms delay between each request
+    });
   };
 
   // ── Called by ImageCard when img loads ──
