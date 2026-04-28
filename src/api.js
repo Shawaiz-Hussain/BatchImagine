@@ -254,6 +254,26 @@ export function buildImageUrl(prompt, width, height, model, pollinationsKey) {
   return `https://gen.pollinations.ai/image/${encoded}?${params.toString()}`;
 }
 
+// ─── Fetch Pollen Balance ───
+export async function getPollenBalance(pollinationsKey) {
+  if (!pollinationsKey) return null;
+  
+  try {
+    const response = await fetch('https://gen.pollinations.ai/account/balance', {
+      headers: {
+        'Authorization': `Bearer ${pollinationsKey}`
+      }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    // Return the full balance object (contains balance, and potentially breakdown)
+    return data;
+  } catch (err) {
+    console.error('Error fetching balance:', err);
+    return null;
+  }
+}
+
 // ─── Download helpers ───
 export async function downloadImage(url, filename) {
   if (!url) return;

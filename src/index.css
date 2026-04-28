@@ -76,6 +76,86 @@ a:hover { text-decoration: underline; }
   align-items: center;
   justify-content: space-between;
 }
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pollen-balance {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+
+.pollen-dual-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pollen-segment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pollen-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+}
+
+.pollen-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.pollen-amount {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.pollen-segment-credit .pollen-amount {
+  color: #f472b6; /* Pollinations Pink */
+  text-shadow: 0 0 10px rgba(244, 114, 182, 0.2);
+}
+
+.pollen-segment-grant .pollen-amount {
+  color: #10b981; /* Pollinations Green */
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.pollen-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-right: 8px;
+  line-height: 1;
+}
+
+.pollen-value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+}
+
+.pollen-unit {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .logo {
   display: flex; align-items: center; gap: 10px;
   text-decoration: none; color: var(--text-primary);

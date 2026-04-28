@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   STYLE_PRESETS,
   IMAGE_MODELS,
@@ -15,6 +15,7 @@ import {
   downloadImage,
   downloadAllAsZip,
   sanitizeTheme,
+  getPollenBalance,
 } from './api';
 
 import Header from './components/Header';
@@ -43,6 +44,7 @@ export default function App() {
   const [loadedCount, setLoadedCount] = useState(0);
   const [showPrompts, setShowPrompts] = useState(true);
   const [lightboxIdx, setLightboxIdx] = useState(-1);
+  const [pollen, setPollen] = useState(null);
 
   const abortRef = useRef(false);
 
@@ -59,6 +61,27 @@ export default function App() {
     saveSettings(s);
     setShowSettings(false);
   }, []);
+
+  const handleLlmChange = useCallback((idx) => {
+    setSettings((prev) => {
+      const next = { ...prev, llmModelIdx: idx };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
+  const refreshBalance = useCallback(async () => {
+    if (settings.pollinationsKey) {
+      const balance = await getPollenBalance(settings.pollinationsKey);
+      setPollen(balance);
+    } else {
+      setPollen(null);
+    }
+  }, [settings.pollinationsKey]);
+
+  useEffect(() => {
+    refreshBalance();
+  }, [refreshBalance]);
 
   // ── Full generate pipeline ──
   const handleGenerate = useCallback(async () => {
@@ -83,6 +106,7 @@ export default function App() {
       if (abortRef.current) return;
       setPrompts(newPrompts);
       setShowPrompts(true);
+      refreshBalance();
 
       // Start image generation
       startImageGeneration(newPrompts);
@@ -172,8 +196,9 @@ export default function App() {
   const handleRegenImages = useCallback(() => {
     if (prompts.length === 0) return;
     startImageGeneration(prompts);
+    refreshBalance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompts]);
+  }, [prompts, refreshBalance]);
 
   // ── Prompt edit ──
   const handlePromptEdit = useCallback((index, value) => {
@@ -203,7 +228,10 @@ export default function App() {
   // ─── Render ───
   return (
     <>
-      <Header onOpenSettings={() => setShowSettings(true)} />
+      <Header 
+        onOpenSettings={() => setShowSettings(true)} 
+        pollen={pollen}
+      />
 
       <main className="app-main">
         {/* ── API Key Banner ── */}
@@ -294,7 +322,24 @@ export default function App() {
             <div className="toolbar-divider" />
 
             <div className="toolbar-group toolbar-group-grow">
-              <label className="toolbar-label">Model</label>
+              <label className="toolbar-label">Prompt AI Model</label>
+              <select
+                className="styled-select"
+                value={settings.llmModelIdx}
+                onChange={(e) => handleLlmChange(Number(e.target.value))}
+              >
+                {LLM_MODELS.map((m, i) => (
+                  <option key={m.id} value={i}>
+                    {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="toolbar-divider" />
+
+            <div className="toolbar-group toolbar-group-grow">
+              <label className="toolbar-label">Image AI Model</label>
               <select
                 className="styled-select"
                 value={modelIdx}

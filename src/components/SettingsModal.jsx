@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { LLM_MODELS } from '../presets';
-
 export default function SettingsModal({ settings, onSave, onClose }) {
   const [local, setLocal] = useState({ ...settings });
 
@@ -9,8 +7,6 @@ export default function SettingsModal({ settings, onSave, onClose }) {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
-
-  const selectedLlm = LLM_MODELS[local.llmModelIdx] || LLM_MODELS[0];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -22,30 +18,6 @@ export default function SettingsModal({ settings, onSave, onClose }) {
           </button>
         </div>
         <div className="modal-body">
-          {/* LLM Model Selection */}
-          <div className="form-group">
-            <label htmlFor="llm-model">Prompt AI Model</label>
-            <select
-              id="llm-model"
-              className="styled-select"
-              value={local.llmModelIdx}
-              onChange={(e) =>
-                setLocal((s) => ({ ...s, llmModelIdx: Number(e.target.value) }))
-              }
-            >
-              {LLM_MODELS.map((m, i) => (
-                <option key={m.id} value={i}>
-                  {m.tier} {m.name} ({m.cost} pollen{m.paidOnly ? ' · Paid' : ''})
-                </option>
-              ))}
-            </select>
-            <small>
-              {selectedLlm.paidOnly
-                ? 'Requires purchased pollen'
-                : 'Free — uses Pollinations AI, no extra key needed'}
-            </small>
-          </div>
-
           {/* Pollinations API Key */}
           <div className="form-group">
             <label htmlFor="poll-key">Pollinations API Key</label>
