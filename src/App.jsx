@@ -24,11 +24,14 @@ import Lightbox from './components/Lightbox';
 import CustomSelect from './components/CustomSelect';
 import Footer from './components/Footer';
 
+import MultiModelTest from './components/MultiModelTest';
+
 // ─────────────────────────────────────────
 export default function App() {
   // Settings
   const [settings, setSettings] = useState(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
+  const [currentView, setCurrentView] = useState('generator'); // 'generator' | 'tester'
 
   // Input state
   const [theme, setTheme] = useState('');
@@ -36,6 +39,7 @@ export default function App() {
   const [ratioIdx, setRatioIdx] = useState(0);
   const [presetIdx, setPresetIdx] = useState(0);
   const [modelIdx, setModelIdx] = useState(0);
+  const [useLlm, setUseLlm] = useState(true);
 
   // Generation state
   const [phase, setPhase] = useState('idle'); // idle | prompts | images | done | error
@@ -96,14 +100,27 @@ export default function App() {
     setLoadedCount(0);
 
     try {
-      const newPrompts = await generatePrompts(
-        theme.trim(),
-        count,
-        preset.prefix,
-        preset.suffix,
-        llm,
-        settings.pollinationsKey
-      );
+      let newPrompts = [];
+      if (useLlm) {
+        newPrompts = await generatePrompts(
+          theme.trim(),
+          count,
+          preset.prefix,
+          preset.suffix,
+          llm,
+          settings.pollinationsKey
+        );
+      } else {
+        // Bypass LLM: Format raw prompt with selected style and duplicate it
+        let rawPrompt = theme.trim();
+        if (preset.prefix) rawPrompt = `${preset.prefix} ${rawPrompt}`;
+        if (preset.suffix) rawPrompt = `${rawPrompt}, ${preset.suffix}`;
+        newPrompts = Array(count).fill(rawPrompt);
+        
+        // Brief artificial delay for UI consistency
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
       if (abortRef.current) return;
       setPrompts(newPrompts);
       setShowPrompts(true);
@@ -249,6 +266,8 @@ export default function App() {
         onOpenSettings={() => setShowSettings(true)} 
         pollen={pollen}
         onRefreshBalance={refreshBalance}
+        currentView={currentView}
+        onViewChange={setCurrentView}
       />
 
       <main className="app-main">
@@ -265,9 +284,13 @@ export default function App() {
           </div>
         )}
 
-        {/* ── Creator Section ── */}
-        <section className="creator-section" style={{ animation: 'fadeSlideUp 0.3s ease' }}>
-          {/* Prompt Input */}
+        {currentView === 'tester' ? (
+          <MultiModelTest settings={settings} onRefreshBalance={refreshBalance} onLlmChange={handleLlmChange} />
+        ) : (
+          <>
+            {/* ── Creator Section ── */}
+            <section className="creator-section" style={{ animation: 'fadeSlideUp 0.3s ease' }}>
+              {/* Prompt Input */}
           <div className="prompt-row">
             <textarea
               className="theme-textarea"
@@ -330,12 +353,29 @@ export default function App() {
 
             <div className="toolbar-row">
               <div className="toolbar-group toolbar-group-grow">
-                <label className="toolbar-label">Prompt AI Model</label>
-                <CustomSelect
-                  options={LLM_MODELS}
-                  value={settings.llmModelIdx}
-                  onChange={handleLlmChange}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="toolbar-label">Prompt AI Model</label>
+                  <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 800 }}>
+                    <input 
+                      type="checkbox" 
+                      checked={useLlm} 
+                      onChange={(e) => setUseLlm(e.target.checked)} 
+                      style={{ accentColor: 'var(--accent-blue)', width: '16px', height: '16px' }}
+                    />
+                    Use AI Gen
+                  </label>
+                </div>
+                {useLlm ? (
+                  <CustomSelect
+                    options={LLM_MODELS}
+                    value={settings.llmModelIdx}
+                    onChange={handleLlmChange}
+                  />
+                ) : (
+                  <div style={{ padding: '8px 14px', border: 'var(--border-width) solid var(--border)', borderRadius: 'var(--radius-md)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 800, display: 'flex', alignItems: 'center', height: '100%', boxSizing: 'border-box' }}>
+                    🚫 Bypassed (Raw Prompt)
+                  </div>
+                )}
               </div>
 
               <div className="toolbar-group toolbar-group-grow">
@@ -518,6 +558,8 @@ export default function App() {
             </div>
           </div>
         </section>
+        </>
+        )}
       </main>
 
       <Footer />

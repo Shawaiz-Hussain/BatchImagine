@@ -1,15 +1,30 @@
-export default function Header({ onOpenSettings, pollen, onRefreshBalance }) {
+export default function Header({ onOpenSettings, pollen, onRefreshBalance, currentView = 'generator', onViewChange }) {
   return (
     <header className="app-header">
       <div className="header-inner">
         <div className="header-left">
-          <a href="/" className="logo">
+          <a href="/" className="logo" onClick={(e) => { e.preventDefault(); onViewChange?.('generator'); }}>
             <img src="/logo.png" alt="Batch Imagine" className="logo-icon-img" />
             <span className="logo-text">
               Batch<span className="accent">Imagine</span>
             </span>
           </a>
         </div>
+
+        <nav className="header-nav">
+          <button 
+            className={`nav-btn ${currentView === 'generator' ? 'active' : ''}`}
+            onClick={() => onViewChange?.('generator')}
+          >
+            Batch Generator
+          </button>
+          <button 
+            className={`nav-btn ${currentView === 'tester' ? 'active' : ''}`}
+            onClick={() => onViewChange?.('tester')}
+          >
+            Model Tester
+          </button>
+        </nav>
 
         <div className="header-right">
           <div className="pollen-balance">
