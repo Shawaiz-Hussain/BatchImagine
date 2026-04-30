@@ -11,8 +11,9 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
   const [presetIdx, setPresetIdx] = useState(0);
   const [selectedModelIndices, setSelectedModelIndices] = useState([0]);
   const [useLlm, setUseLlm] = useState(true);
+  const [testPrompt, setTestPrompt] = useState('');
   
-  const [phase, setPhase] = useState('idle'); // idle | generating | done
+  const [phase, setPhase] = useState('idle'); // idle | fetching_prompt | prompts | generating | done | error
   const [statusText, setStatusText] = useState('');
   const [images, setImages] = useState([]); // { url, prompt, loaded, error, modelName, cost, tier }
   const [lightboxIdx, setLightboxIdx] = useState(-1);
@@ -27,8 +28,9 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     if (selectedModelIndices.length === 0) return;
 
     abortRef.current = false;
-    setPhase('generating');
+    setPhase('fetching_prompt');
     setLoadedCount(0);
+    setImages([]); // clear images
     
     const preset = STYLE_PRESETS[presetIdx];
     let prompt = theme.trim();
@@ -57,12 +59,22 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
         if (abortRef.current) return;
       }
     }
+    
+    setTestPrompt(prompt);
+    setPhase('prompts');
+    setStatusText('Prompt ready. Please review and approve.');
+  }, [theme, selectedModelIndices, presetIdx, settings, useLlm, onRefreshBalance]);
 
+  const startImageGeneration = useCallback(() => {
+    setPhase('generating');
+    setStatusText(`Preparing test for ${selectedModelIndices.length} models…`);
+    setLoadedCount(0);
+    
     const initialImages = selectedModelIndices.map((idx) => {
       const model = IMAGE_MODELS[idx];
       return {
         url: null,
-        prompt,
+        prompt: testPrompt,
         modelName: model.name,
         cost: model.cost,
         tier: model.tier,
@@ -73,7 +85,6 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     });
     
     setImages(initialImages);
-    setStatusText(`Preparing test for ${selectedModelIndices.length} models…`);
 
     // Staggered generation
     selectedModelIndices.forEach((modelIdx, i) => {
@@ -81,7 +92,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
         if (abortRef.current) return;
         const model = IMAGE_MODELS[modelIdx];
         const url = buildImageUrl(
-          prompt,
+          testPrompt,
           ratio.w,
           ratio.h,
           model.id,
@@ -96,11 +107,11 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
           return next;
         });
         setStatusText(`Generating images… ${i + 1} / ${selectedModelIndices.length}`);
-      }, i * 300);
+      }, i * 1500);
     });
     
     if (onRefreshBalance) setTimeout(onRefreshBalance, 2000);
-  }, [theme, selectedModelIndices, ratio, settings.pollinationsKey, onRefreshBalance]);
+  }, [testPrompt, selectedModelIndices, ratio, settings.pollinationsKey, onRefreshBalance]);
 
   const handleStop = useCallback(() => {
     abortRef.current = true;
@@ -153,7 +164,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     });
   }, [images, ratio, settings.pollinationsKey]);
 
-  const isWorking = phase === 'generating';
+  const isWorking = phase === 'fetching_prompt' || phase === 'generating';
 
   return (
     <>
@@ -250,22 +261,64 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
             <span className="spinner-inline" />
             <span>Stop Test</span>
           </>
+        ) : phase === 'prompts' ? (
+          'Regenerate Prompt'
         ) : (
           `Test ${selectedModelIndices.length} Models`
         )}
       </button>
 
-      {images.length > 0 && (
-        <div className="results-container">
-          {isWorking && (
-            <div className="progress-bar-wrap" style={{ marginTop: '20px' }}>
-              <div 
-                className="progress-bar-fill" 
-                style={{ width: `${(loadedCount / images.length) * 100}%` }} 
+      {/* ── Status ── */}
+      {(phase === 'fetching_prompt' || phase === 'generating' || phase === 'done' || phase === 'error' || phase === 'prompts') && (
+        <section className="status-bar" style={{ animation: 'fadeSlideUp 0.3s ease', marginTop: '24px' }}>
+          {phase === 'error' ? (
+            <p className="status-text error">{statusText}</p>
+          ) : (
+            <>
+              <p className="status-text">{statusText}</p>
+              {images.length > 0 && phase !== 'prompts' && phase !== 'fetching_prompt' && (
+                <div className="progress-track">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${(loadedCount / images.length) * 100}%` }}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
+
+      {/* ── Prompt ── */}
+      {(phase === 'prompts' || images.length > 0) && testPrompt && (
+        <section style={{ animation: 'fadeSlideUp 0.3s ease', marginTop: '24px' }}>
+          <div className="section-header">
+            <h2 className="section-title">Final Prompt</h2>
+            {phase === 'prompts' && (
+              <div className="section-actions">
+                <button className="btn-accent" onClick={startImageGeneration}>
+                  Approve & Generate
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="prompts-grid" style={{ gridTemplateColumns: '1fr' }}>
+            <div className="prompt-card">
+              <span className="prompt-number">#1</span>
+              <textarea
+                className="prompt-textarea"
+                value={testPrompt}
+                onChange={(e) => setTestPrompt(e.target.value)}
+                readOnly={phase !== 'prompts'}
+                style={{ cursor: phase === 'prompts' ? 'text' : 'default' }}
               />
             </div>
-          )}
-          
+          </div>
+        </section>
+      )}
+
+      {images.length > 0 && (
+        <div className="results-container">
           <div className="tester-grid" style={{ marginTop: '20px' }}>
             {images.map((img, i) => (
               <div key={i} className="tester-card">
@@ -278,7 +331,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
                 </div>
                 
                 <div 
-                  className="image-wrap"
+                  className="tester-image-wrap"
                   style={{ aspectRatio: `${ratio.w} / ${ratio.h}` }}
                   onClick={() => img.loaded && setLightboxIdx(i)}
                 >
@@ -289,9 +342,10 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
                     <div className="spinner-overlay"><div className="spinner" /></div>
                   )}
                   {img.error ? (
-                    <div className="error-box">
-                      <p>Generation failed</p>
-                      <button className="btn-secondary btn-sm mt-2" onClick={(e) => { e.stopPropagation(); handleRetry(i); }}>
+                    <div className="error-overlay">
+                      <span style={{ fontSize: '24px', marginBottom: '8px' }}>⚠️</span>
+                      <p style={{ margin: '0 0 8px 0', fontWeight: 800 }}>Generation Failed</p>
+                      <button className="btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleRetry(i); }}>
                         Retry
                       </button>
                     </div>
@@ -299,7 +353,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
                     <img
                       src={img.url}
                       alt={img.modelName}
-                      className={img.loaded ? 'loaded' : ''}
+                      className={`tester-image ${img.loaded ? 'loaded' : ''}`}
                       onLoad={() => handleImageLoad(i)}
                       onError={() => handleImageError(i)}
                       loading="lazy"
@@ -338,11 +392,9 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
 
       {lightboxIdx >= 0 && (
         <Lightbox
-          images={images}
-          currentIndex={lightboxIdx}
+          src={images[lightboxIdx]?.url}
+          prompt={images[lightboxIdx]?.prompt}
           onClose={() => setLightboxIdx(-1)}
-          onNext={() => setLightboxIdx((lightboxIdx + 1) % images.length)}
-          onPrev={() => setLightboxIdx((lightboxIdx - 1 + images.length) % images.length)}
         />
       )}
     </section>
