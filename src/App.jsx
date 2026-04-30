@@ -133,7 +133,7 @@ export default function App() {
       setStatusText(err.message);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, count, preset, settings]);
+  }, [theme, count, preset, settings, useLlm, llm, ratio, model, refreshBalance]);
 
   // ── Image generation from prompts ──
   function startImageGeneration(promptList) {
@@ -232,7 +232,7 @@ export default function App() {
     startImageGeneration(prompts);
     refreshBalance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompts, refreshBalance]);
+  }, [prompts, refreshBalance, ratio, model]);
 
   // ── Prompt edit ──
   const handlePromptEdit = useCallback((index, value) => {
