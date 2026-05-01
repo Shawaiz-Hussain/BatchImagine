@@ -191,10 +191,10 @@ export default function App() {
     [images.length, count]
   );
 
-  const handleImageError = useCallback((index) => {
+  const handleImageError = useCallback((index, url) => {
     setImages((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], error: true };
+      next[index] = { ...next[index], error: true, errorMsg: 'Failed to load' };
       return next;
     });
     setLoadedCount((prev) => {
@@ -203,6 +203,28 @@ export default function App() {
       if (n >= total) setPhase('done');
       return n;
     });
+
+    if (url) {
+      fetch(url)
+        .then((res) => res.text())
+        .then((text) => {
+          let errorMsg = 'Generation failed';
+          try {
+            const json = JSON.parse(text);
+            if (json.error) errorMsg = json.error;
+          } catch {
+            if (text && text.length < 100 && !text.includes('<html')) {
+              errorMsg = text;
+            }
+          }
+          setImages((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], errorMsg };
+            return next;
+          });
+        })
+        .catch(() => {});
+    }
   }, [images.length, count]);
 
   // ── Regenerate single image ──
@@ -497,8 +519,10 @@ export default function App() {
                   >
                     {!img.loaded && !img.error && <div className="skeleton" />}
                     {img.error && (
-                      <div className="error-overlay">
-                        <span>Failed to load</span>
+                      <div className="error-overlay" style={{ padding: '8px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', marginBottom: '8px', opacity: 0.9 }}>
+                          {img.errorMsg || 'Failed to load'}
+                        </span>
                         <button onClick={(e) => { e.stopPropagation(); handleRetry(i); }}>
                           Retry
                         </button>
@@ -509,7 +533,7 @@ export default function App() {
                       src={img.url}
                       alt={img.prompt}
                       onLoad={() => handleImageLoad(i)}
-                      onError={() => handleImageError(i)}
+                      onError={() => handleImageError(i, img.url)}
                     />
                   </div>
                   <div className="image-card-body">

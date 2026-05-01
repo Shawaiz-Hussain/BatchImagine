@@ -132,10 +132,10 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     });
   }, [selectedModelIndices.length]);
 
-  const handleImageError = useCallback((index) => {
+  const handleImageError = useCallback((index, url) => {
     setImages((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], error: true };
+      next[index] = { ...next[index], error: true, errorMsg: 'Generation Failed' };
       return next;
     });
     setLoadedCount((prev) => {
@@ -143,6 +143,28 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
       if (n >= selectedModelIndices.length) setPhase('done');
       return n;
     });
+
+    if (url) {
+      fetch(url)
+        .then((res) => res.text())
+        .then((text) => {
+          let errorMsg = 'Generation failed';
+          try {
+            const json = JSON.parse(text);
+            if (json.error) errorMsg = json.error;
+          } catch {
+            if (text && text.length < 100 && !text.includes('<html')) {
+              errorMsg = text;
+            }
+          }
+          setImages((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], errorMsg };
+            return next;
+          });
+        })
+        .catch(() => {});
+    }
   }, [selectedModelIndices.length]);
 
   const handleRetry = useCallback((index) => {
@@ -342,9 +364,10 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
                     <div className="spinner-overlay"><div className="spinner" /></div>
                   )}
                   {img.error ? (
-                    <div className="error-overlay">
+                    <div className="error-overlay" style={{ padding: '12px' }}>
                       <span style={{ fontSize: '24px', marginBottom: '8px' }}>⚠️</span>
                       <p style={{ margin: '0 0 8px 0', fontWeight: 800 }}>Generation Failed</p>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', opacity: 0.9 }}>{img.errorMsg || 'Unknown error'}</p>
                       <button className="btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleRetry(i); }}>
                         Retry
                       </button>
@@ -355,7 +378,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
                       alt={img.modelName}
                       className={`tester-image ${img.loaded ? 'loaded' : ''}`}
                       onLoad={() => handleImageLoad(i)}
-                      onError={() => handleImageError(i)}
+                      onError={() => handleImageError(i, img.url)}
                       loading="lazy"
                     />
                   ) : null}
