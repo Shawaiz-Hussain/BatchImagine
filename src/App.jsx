@@ -28,6 +28,30 @@ import MultiModelTest from './components/MultiModelTest';
 
 // ─────────────────────────────────────────
 export default function App() {
+  // Theme
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
+
   // Settings
   const [settings, setSettings] = useState(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
@@ -290,6 +314,8 @@ export default function App() {
         onRefreshBalance={refreshBalance}
         currentView={currentView}
         onViewChange={setCurrentView}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
       />
 
       <main className="app-main">
