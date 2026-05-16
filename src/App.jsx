@@ -23,6 +23,7 @@ import SettingsModal from './components/SettingsModal';
 import Lightbox from './components/Lightbox';
 import CustomSelect from './components/CustomSelect';
 import Footer from './components/Footer';
+import CostConfirmModal from './components/CostConfirmModal';
 
 import MultiModelTest from './components/MultiModelTest';
 
@@ -74,6 +75,7 @@ export default function App() {
   const [showPrompts, setShowPrompts] = useState(true);
   const [lightboxIdx, setLightboxIdx] = useState(-1);
   const [pollen, setPollen] = useState(null);
+  const [showCostModal, setShowCostModal] = useState(false);
 
   const abortRef = useRef(false);
 
@@ -112,8 +114,50 @@ export default function App() {
     refreshBalance();
   }, [refreshBalance]);
 
-  // ── Full generate pipeline ──
-  const handleGenerate = useCallback(async () => {
+  // ── Cost calculation ──
+  const calculateCost = useCallback(() => {
+    const costItems = [];
+    const warnings = [];
+
+    // LLM cost (if using AI prompt generation)
+    if (useLlm) {
+      costItems.push({
+        label: `Prompt AI: ${llm.name}`,
+        cost: llm.cost,
+        count: 1,
+        detail: llm.paidOnly ? 'Paid model — requires purchased pollen' : 'Free tier',
+      });
+      if (llm.paidOnly && !settings.pollinationsKey) {
+        warnings.push('Paid LLM selected but no API key set. This may fail.');
+      }
+    }
+
+    // Image model cost
+    costItems.push({
+      label: `Image: ${model.name}`,
+      cost: model.cost,
+      count: count,
+      detail: model.paidOnly ? 'Paid model — requires purchased pollen' : `${model.tier} tier`,
+    });
+
+    if (model.paidOnly && !settings.pollinationsKey) {
+      warnings.push('Paid image model selected but no API key set.');
+    }
+
+    const totalCost = costItems.reduce((sum, item) => sum + item.cost * (item.count || 1), 0);
+
+    return { costItems, totalCost, warnings };
+  }, [useLlm, llm, model, count, settings.pollinationsKey]);
+
+  // ── Show cost modal before generating ──
+  const handleGenerate = useCallback(() => {
+    if (!theme.trim()) return;
+    setShowCostModal(true);
+  }, [theme]);
+
+  // ── Actual generate pipeline (called after cost confirmation) ──
+  const confirmGenerate = useCallback(async () => {
+    setShowCostModal(false);
     if (!theme.trim()) return;
 
     abortRef.current = false;
@@ -333,7 +377,7 @@ export default function App() {
         )}
 
         {currentView === 'tester' ? (
-          <MultiModelTest settings={settings} onRefreshBalance={refreshBalance} onLlmChange={handleLlmChange} />
+          <MultiModelTest settings={settings} onRefreshBalance={refreshBalance} onLlmChange={handleLlmChange} pollen={pollen} />
         ) : (
           <>
             {/* ── Creator Section ── */}
@@ -622,6 +666,20 @@ export default function App() {
           onClose={() => setShowSettings(false)}
         />
       )}
+
+      {showCostModal && (() => {
+        const { costItems, totalCost, warnings } = calculateCost();
+        return (
+          <CostConfirmModal
+            costItems={costItems}
+            totalCost={totalCost}
+            warnings={warnings}
+            pollen={pollen}
+            onConfirm={confirmGenerate}
+            onCancel={() => setShowCostModal(false)}
+          />
+        );
+      })()}
 
       {lightboxIdx >= 0 && images[lightboxIdx] && (
         <Lightbox

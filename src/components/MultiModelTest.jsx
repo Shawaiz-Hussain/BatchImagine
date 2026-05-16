@@ -4,8 +4,9 @@ import { buildImageUrl, downloadImage, generatePrompts } from '../api';
 import CustomSelect from './CustomSelect';
 import MultiSelect from './MultiSelect';
 import Lightbox from './Lightbox';
+import CostConfirmModal from './CostConfirmModal';
 
-export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange }) {
+export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange, pollen }) {
   const [theme, setTheme] = useState('');
   const [ratioIdx, setRatioIdx] = useState(0);
   const [presetIdx, setPresetIdx] = useState(0);
@@ -20,6 +21,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
   const [loadedCount, setLoadedCount] = useState(0);
 
   const abortRef = useRef(false);
+  const [showCostModal, setShowCostModal] = useState(false);
 
   const ratio = ASPECT_RATIOS[ratioIdx];
 
@@ -64,6 +66,58 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     setPhase('prompts');
     setStatusText('Prompt ready. Please review and approve.');
   }, [theme, selectedModelIndices, presetIdx, settings, useLlm, onRefreshBalance]);
+
+  // ── Cost calculation ──
+  const calculateCost = useCallback(() => {
+    const costItems = [];
+    const warnings = [];
+
+    // LLM cost (if using AI prompt generation)
+    if (useLlm) {
+      const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[0];
+      costItems.push({
+        label: `Prompt AI: ${llm.name}`,
+        cost: llm.cost,
+        count: 1,
+        detail: llm.paidOnly ? 'Paid model — requires purchased pollen' : 'Free tier',
+      });
+      if (llm.paidOnly && !settings.pollinationsKey) {
+        warnings.push('Paid LLM selected but no API key set. This may fail.');
+      }
+    }
+
+    // Image model costs (one per selected model)
+    selectedModelIndices.forEach((idx) => {
+      const model = IMAGE_MODELS[idx];
+      costItems.push({
+        label: `Image: ${model.name}`,
+        cost: model.cost,
+        count: 1,
+        detail: model.paidOnly ? 'Paid model — requires purchased pollen' : `${model.tier} tier`,
+      });
+      if (model.paidOnly && !settings.pollinationsKey) {
+        warnings.push(`Paid model "${model.name}" requires an API key.`);
+      }
+    });
+
+    const totalCost = costItems.reduce((sum, item) => sum + item.cost * (item.count || 1), 0);
+    // De-duplicate warnings
+    const uniqueWarnings = [...new Set(warnings)];
+
+    return { costItems, totalCost, warnings: uniqueWarnings };
+  }, [useLlm, settings, selectedModelIndices]);
+
+  // ── Show cost modal instead of generating directly ──
+  const handleGenerateWithCost = useCallback(() => {
+    if (!theme.trim() || selectedModelIndices.length === 0) return;
+    setShowCostModal(true);
+  }, [theme, selectedModelIndices]);
+
+  // ── Confirm and proceed with generation ──
+  const confirmGenerate = useCallback(() => {
+    setShowCostModal(false);
+    handleGenerate();
+  }, [handleGenerate]);
 
   const startImageGeneration = useCallback(() => {
     setPhase('generating');
@@ -276,7 +330,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
       <button
         className={isWorking ? "btn-danger btn-generate" : "btn-primary btn-generate"}
         disabled={!theme.trim() || selectedModelIndices.length === 0}
-        onClick={isWorking ? handleStop : handleGenerate}
+        onClick={isWorking ? handleStop : handleGenerateWithCost}
       >
         {isWorking ? (
           <>
@@ -421,6 +475,21 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
         />
       )}
     </section>
+
+    {/* ── Cost Confirmation Modal ── */}
+    {showCostModal && (() => {
+      const { costItems, totalCost, warnings } = calculateCost();
+      return (
+        <CostConfirmModal
+          costItems={costItems}
+          totalCost={totalCost}
+          warnings={warnings}
+          pollen={pollen}
+          onConfirm={confirmGenerate}
+          onCancel={() => setShowCostModal(false)}
+        />
+      );
+    })()}
 
     {/* ── How It Works ── */}
     <section className="how-it-works-section" style={{ marginTop: '60px' }}>
