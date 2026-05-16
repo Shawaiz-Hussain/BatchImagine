@@ -4,8 +4,8 @@ import JSZip from 'jszip';
 // ─── Constants ───
 const MAX_THEME_LENGTH = 500;
 const MAX_PROMPT_LENGTH = 1000;
-const API_TIMEOUT_MS = 30000;
-const LARGE_BATCH_TIMEOUT_MS = 60000;
+const API_TIMEOUT_MS = 60000;
+const LARGE_BATCH_TIMEOUT_MS = 120000;
 
 // ─── Storage helpers ───
 const KEYS = {
