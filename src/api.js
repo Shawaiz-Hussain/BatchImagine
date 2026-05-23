@@ -258,16 +258,42 @@ export function buildImageUrl(prompt, width, height, model, pollinationsKey) {
 export async function getPollenBalance(pollinationsKey) {
   if (!pollinationsKey) return null;
   
+  const headers = { 'Authorization': `Bearer ${pollinationsKey}` };
+
   try {
-    const response = await fetch('https://gen.pollinations.ai/account/balance', {
-      headers: {
-        'Authorization': `Bearer ${pollinationsKey}`
-      }
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    // Return the full balance object (contains balance, and potentially breakdown)
-    return data;
+    // Fetch total balance
+    const balRes = await fetch('https://gen.pollinations.ai/account/balance', { headers });
+    if (!balRes.ok) return null;
+    const balData = await balRes.json();
+    const total = Number(balData.balance ?? 0);
+
+    // Try to fetch wallet breakdown (undocumented but available on the website)
+    // Tries: /account/wallet → /account/balances → fallback to total-only
+    let paid = null;
+    let tier = null;
+
+    for (const path of ['/account/wallet', '/account/balances', '/account/pollen']) {
+      try {
+        const res = await fetch(`https://gen.pollinations.ai${path}`, { headers });
+        if (res.ok) {
+          const d = await res.json();
+          // Accept any shape that has explicit paid/tier breakdown
+          const p = d.pack_balance ?? d.paid ?? d.packBalance ?? d.paid_balance;
+          const t = d.tier_balance ?? d.tier ?? d.tierBalance ?? d.free ?? d.grant;
+          if (p !== undefined || t !== undefined) {
+            paid = p !== undefined ? Number(p) : null;
+            tier = t !== undefined ? Number(t) : null;
+            break;
+          }
+        }
+      } catch { /* ignore, try next */ }
+    }
+
+    return {
+      balance: total,
+      paid: paid,   // null if API doesn't expose breakdown
+      tier: tier,   // null if API doesn't expose breakdown
+    };
   } catch (err) {
     console.error('Error fetching balance:', err);
     return null;

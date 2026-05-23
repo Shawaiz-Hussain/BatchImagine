@@ -21,10 +21,11 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
   }, [onCancel]);
 
   // Calculate balance
-  const ab = pollen?.accountBalance || {};
-  const paidBalance = Number(ab.paid ?? 0);
-  const tierBalance = Number(ab.tier ?? 0);
-  const totalBalance = Number(ab.total ?? pollen?.balance ?? 0);
+  const totalBalance = Number(pollen?.balance ?? 0);
+  const hasSplit = pollen?.paid !== null && pollen?.paid !== undefined && pollen?.tier !== null && pollen?.tier !== undefined;
+  const paidBalance = hasSplit ? Number(pollen.paid)  : totalBalance;
+  const tierBalance = hasSplit ? Number(pollen.tier)  : 0;
+
   const hasBalance = pollen && typeof pollen === 'object';
   const isInsufficient = hasBalance && totalBalance < totalCost;
 
@@ -73,21 +74,9 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
           {hasBalance && (
             <div className={`cost-balance-card ${isInsufficient ? 'insufficient' : 'sufficient'}`}>
               <div className="cost-balance-header">Your Balance</div>
-              <div className="cost-balance-grid">
-                <div className="cost-balance-item">
-                  <span className="cost-balance-icon">💰</span>
-                  <div>
-                    <span className="cost-balance-label">Paid</span>
-                    <span className="cost-balance-amount">{paidBalance.toFixed(4)}</span>
-                  </div>
-                </div>
-                <div className="cost-balance-item">
-                  <span className="cost-balance-icon">🌱</span>
-                  <div>
-                    <span className="cost-balance-label">Free Tier</span>
-                    <span className="cost-balance-amount">{tierBalance.toFixed(4)}</span>
-                  </div>
-                </div>
+              <div className="cost-balance-single">
+                <span className="cost-balance-amount">{totalBalance.toFixed(4)}</span>
+                <span className="cost-balance-unit">pollen</span>
               </div>
               <div className="cost-balance-comparison">
                 <span>After generation:</span>

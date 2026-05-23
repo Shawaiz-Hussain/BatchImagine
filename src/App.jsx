@@ -112,6 +112,22 @@ export default function App() {
 
   useEffect(() => {
     refreshBalance();
+
+    // Auto-refresh balance every 30 seconds to keep it synchronized
+    const interval = setInterval(() => {
+      refreshBalance();
+    }, 30000);
+
+    // Instant refresh when window gets focus (e.g., coming back from top-up dashboard)
+    const handleFocus = () => {
+      refreshBalance();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [refreshBalance]);
 
   // ── Cost calculation ──

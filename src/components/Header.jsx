@@ -27,34 +27,15 @@ export default function Header({ onOpenSettings, pollen, onRefreshBalance, curre
         </nav>
 
         <div className="header-right">
-          <div className="pollen-balance">
-            {pollen && typeof pollen === 'object' ? (() => {
-              const ab = pollen.accountBalance || {};
-              const paid = Number(ab.paid ?? 0);
-              const tier = Number(ab.tier ?? 0);
-              const total = Number(ab.total ?? pollen.balance ?? 0);
-              return (
-              <div 
-                className="pollen-dual-wrap" 
-                onClick={onRefreshBalance} 
-                style={{ cursor: 'pointer' }}
-                title={`Paid: ${paid.toFixed(3)} · Free: ${tier.toFixed(3)} · Total: ${total.toFixed(3)}\nClick to refresh`}
-              >
-                <div className="pollen-segment pollen-segment-credit">
-                  <span className="pollen-icon">💰</span>
-                  <span className="pollen-amount">{paid.toFixed(3)}</span>
-                </div>
-                <div className="pollen-divider" />
-                <div className="pollen-segment pollen-segment-grant">
-                  <span className="pollen-icon">🌱</span>
-                  <span className="pollen-amount">{tier.toFixed(3)}</span>
-                </div>
-              </div>);
-            })()
+          <div className="pollen-balance" onClick={onRefreshBalance} style={{ cursor: 'pointer' }} title="Click to refresh balance">
+            {pollen && typeof pollen === 'object' ? (
+              <div className="pollen-single-wrap">
+                <span className="pollen-amount">{Number(pollen.balance ?? 0).toFixed(3)}</span>
+                <span className="pollen-label-inline">pollen</span>
+              </div>
             ) : (
-              <div className="pollen-value-wrap">
-                <div className="pollen-label">Status</div>
-                <span className="pollen-unit" style={{ fontWeight: 800, color: 'var(--text-muted)' }}>Not Connected</span>
+              <div className="pollen-single-wrap">
+                <span className="pollen-unit">Not Connected</span>
               </div>
             )}
           </div>
