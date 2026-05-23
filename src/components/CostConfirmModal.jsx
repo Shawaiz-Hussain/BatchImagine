@@ -7,7 +7,7 @@ import { useEffect } from 'react';
  * Props:
  *   onConfirm  — proceed with generation
  *   onCancel   — go back to edit settings
- *   pollen     — balance object { credit, grant, balance }
+ *   pollen     — balance object { balance, accountBalance: { paid, tier, total } }
  *   costItems  — array of { label, cost, count?, detail? }
  *   totalCost  — pre-calculated total
  *   warnings   — array of warning strings
@@ -21,9 +21,10 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
   }, [onCancel]);
 
   // Calculate balance
-  const creditBalance = Number(pollen?.credit ?? 0);
-  const grantBalance = Number(pollen?.grant ?? pollen?.balance ?? 0);
-  const totalBalance = creditBalance + grantBalance;
+  const ab = pollen?.accountBalance || {};
+  const paidBalance = Number(ab.paid ?? 0);
+  const tierBalance = Number(ab.tier ?? 0);
+  const totalBalance = Number(ab.total ?? pollen?.balance ?? 0);
   const hasBalance = pollen && typeof pollen === 'object';
   const isInsufficient = hasBalance && totalBalance < totalCost;
 
@@ -74,17 +75,17 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
               <div className="cost-balance-header">Your Balance</div>
               <div className="cost-balance-grid">
                 <div className="cost-balance-item">
-                  <span className="cost-balance-icon">🌸</span>
+                  <span className="cost-balance-icon">💰</span>
                   <div>
-                    <span className="cost-balance-label">Credit</span>
-                    <span className="cost-balance-amount">{creditBalance.toFixed(4)}</span>
+                    <span className="cost-balance-label">Paid</span>
+                    <span className="cost-balance-amount">{paidBalance.toFixed(4)}</span>
                   </div>
                 </div>
                 <div className="cost-balance-item">
                   <span className="cost-balance-icon">🌱</span>
                   <div>
-                    <span className="cost-balance-label">Free Grant</span>
-                    <span className="cost-balance-amount">{grantBalance.toFixed(4)}</span>
+                    <span className="cost-balance-label">Free Tier</span>
+                    <span className="cost-balance-amount">{tierBalance.toFixed(4)}</span>
                   </div>
                 </div>
               </div>

@@ -4,8 +4,8 @@ import JSZip from 'jszip';
 // ─── Constants ───
 const MAX_THEME_LENGTH = 500;
 const MAX_PROMPT_LENGTH = 1000;
-const API_TIMEOUT_MS = 60000;
-const LARGE_BATCH_TIMEOUT_MS = 120000;
+const API_TIMEOUT_MS = 120000;
+const LARGE_BATCH_TIMEOUT_MS = 240000;
 
 // ─── Storage helpers ───
 const KEYS = {
@@ -278,7 +278,7 @@ export async function getPollenBalance(pollinationsKey) {
 export async function downloadImage(url, filename) {
   if (!url) return;
   try {
-    const res = await fetchWithTimeout(url, {}, 60000);
+    const res = await fetchWithTimeout(url, {}, 120000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
     const a = document.createElement('a');
@@ -303,7 +303,7 @@ export async function downloadAllAsZip(images) {
     const results = await Promise.allSettled(
       images.map(async (img, i) => {
         if (!img.url || img.error) return null;
-        const res = await fetchWithTimeout(img.url, {}, 60000);
+        const res = await fetchWithTimeout(img.url, {}, 120000);
         if (!res.ok) return null;
         const blob = await res.blob();
         const ext = blob.type.includes('png') ? 'png' : 'jpg';
