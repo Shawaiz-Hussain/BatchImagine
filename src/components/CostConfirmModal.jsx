@@ -26,8 +26,13 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
   const paidBalance = hasSplit ? Number(pollen.paid)  : totalBalance;
   const tierBalance = hasSplit ? Number(pollen.tier)  : 0;
 
+  const paidCost = costItems.reduce((sum, item) => sum + (item.paidOnly ? item.cost * (item.count || 1) : 0), 0);
+  const tierCost = costItems.reduce((sum, item) => sum + (!item.paidOnly ? item.cost * (item.count || 1) : 0), 0);
+
   const hasBalance = pollen && typeof pollen === 'object';
-  const isInsufficient = hasBalance && totalBalance < totalCost;
+  const isInsufficient = hasBalance && (
+    totalBalance < totalCost || (hasSplit && paidBalance < paidCost)
+  );
 
   return (
     <div className="modal-overlay cost-modal-overlay" onClick={onCancel}>
@@ -74,11 +79,35 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
           {hasBalance && (
             <div className={`cost-balance-card ${isInsufficient ? 'insufficient' : 'sufficient'}`}>
               <div className="cost-balance-header">Your Balance</div>
-              <div className="cost-balance-single">
-                <span className="cost-balance-amount">{totalBalance.toFixed(4)}</span>
-                <span className="cost-balance-unit">pollen</span>
-              </div>
-              <div className="cost-balance-comparison">
+              {hasSplit ? (
+                <div className="cost-balance-split" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '6px' }}>
+                  <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', fontWeight: 800 }}>
+                    <span className="balance-label" style={{ color: 'rgba(255,255,255,0.85)' }}>💎 Paid Pollen (purchased):</span>
+                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)', color: paidBalance < paidCost ? '#ffcdd2' : 'inherit' }}>
+                      {paidBalance.toFixed(4)} pollen
+                    </span>
+                  </div>
+                  <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', fontWeight: 800 }}>
+                    <span className="balance-label" style={{ color: 'rgba(255,255,255,0.85)' }}>🟢 Tier Pollen (grant):</span>
+                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {tierBalance.toFixed(4)} pollen
+                    </span>
+                  </div>
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)', margin: '4px 0' }} />
+                  <div className="balance-row total-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', fontWeight: 900 }}>
+                    <span className="balance-label">Total Balance:</span>
+                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {totalBalance.toFixed(4)} pollen
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="cost-balance-single">
+                  <span className="cost-balance-amount">{totalBalance.toFixed(4)}</span>
+                  <span className="cost-balance-unit">pollen</span>
+                </div>
+              )}
+              <div className="cost-balance-comparison" style={{ marginTop: '12px' }}>
                 <span>After generation:</span>
                 <span className={`cost-remaining ${isInsufficient ? 'negative' : ''}`}>
                   {(totalBalance - totalCost).toFixed(4)} pollen
@@ -112,7 +141,11 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
             <div className="cost-warnings">
               <div className="cost-warning-item cost-warning-critical">
                 <span>🚫</span>
-                <span>Insufficient balance! You may run out of pollen mid-generation. Consider reducing count or switching to cheaper models.</span>
+                <span>
+                  {hasSplit && paidBalance < paidCost 
+                    ? 'Insufficient paid pollen! This generation requires premium paid pollen. Please top up your balance or switch to free tier models.'
+                    : 'Insufficient balance! You may run out of pollen mid-generation. Consider reducing count or switching to cheaper models.'}
+                </span>
               </div>
             </div>
           )}

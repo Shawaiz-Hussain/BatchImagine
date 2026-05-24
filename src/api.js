@@ -333,7 +333,7 @@ export async function downloadAllAsZip(images) {
         if (!res.ok) return null;
         const blob = await res.blob();
         const ext = blob.type.includes('png') ? 'png' : 'jpg';
-        zip.file(`batchforge_${String(i + 1).padStart(3, '0')}.${ext}`, blob);
+        zip.file(`batchimagine_${String(i + 1).padStart(3, '0')}.${ext}`, blob);
         return true;
       })
     );
@@ -350,7 +350,7 @@ export async function downloadAllAsZip(images) {
     const content = await zip.generateAsync({ type: 'blob' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(content);
-    a.download = `batchforge_${Date.now()}.zip`;
+    a.download = `batchimagine_${Date.now()}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

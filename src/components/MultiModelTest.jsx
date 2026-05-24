@@ -75,10 +75,16 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
     // LLM cost (if using AI prompt generation)
     if (useLlm) {
       const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[0];
+      // Input tokens are constant, output tokens scale with the requested image count (which is exactly 1 here)
+      const baseInputCost = llm.cost * 0.05;
+      const baseOutputCost = (llm.cost * 0.95) / 10;
+      const dynamicLlmCost = baseInputCost + baseOutputCost * 1;
+
       costItems.push({
         label: `Prompt AI: ${llm.name}`,
-        cost: llm.cost,
+        cost: dynamicLlmCost,
         count: 1,
+        paidOnly: !!llm.paidOnly,
         detail: llm.paidOnly ? 'Paid model — requires purchased pollen' : 'Free tier',
       });
       if (llm.paidOnly && !settings.pollinationsKey) {
@@ -93,6 +99,7 @@ export default function MultiModelTest({ settings, onRefreshBalance, onLlmChange
         label: `Image: ${model.name}`,
         cost: model.cost,
         count: 1,
+        paidOnly: !!model.paidOnly,
         detail: model.paidOnly ? 'Paid model — requires purchased pollen' : `${model.tier} tier`,
       });
       if (model.paidOnly && !settings.pollinationsKey) {

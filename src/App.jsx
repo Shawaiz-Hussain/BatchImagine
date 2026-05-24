@@ -137,10 +137,16 @@ export default function App() {
 
     // LLM cost (if using AI prompt generation)
     if (useLlm) {
+      // Input tokens are constant, output tokens scale with the requested image count
+      const baseInputCost = llm.cost * 0.05;
+      const baseOutputCost = (llm.cost * 0.95) / 10;
+      const dynamicLlmCost = baseInputCost + baseOutputCost * count;
+
       costItems.push({
         label: `Prompt AI: ${llm.name}`,
-        cost: llm.cost,
+        cost: dynamicLlmCost,
         count: 1,
+        paidOnly: !!llm.paidOnly,
         detail: llm.paidOnly ? 'Paid model — requires purchased pollen' : 'Free tier',
       });
       if (llm.paidOnly && !settings.pollinationsKey) {
@@ -153,6 +159,7 @@ export default function App() {
       label: `Image: ${model.name}`,
       cost: model.cost,
       count: count,
+      paidOnly: !!model.paidOnly,
       detail: model.paidOnly ? 'Paid model — requires purchased pollen' : `${model.tier} tier`,
     });
 

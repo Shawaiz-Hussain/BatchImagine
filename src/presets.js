@@ -102,7 +102,7 @@ export const LLM_MODELS = [
   // Ultra-cheap (green)
   { id: 'nova-fast',     name: 'Nova Micro — Ultra Fast & Cheap',       paidOnly: false, cost: 0.0003,  tier: '🟢' },  // 0.000017 + 0.00028
   { id: 'openai-fast',   name: 'GPT-5 Nano — Ultra Fast',              paidOnly: false, cost: 0.0008,  tier: '🟢' },  // 0.000025 + 0.0008
-  { id: 'gemini-fast',   name: 'Gemini 2.5 Flash Lite — Ultra Fast',   paidOnly: false, cost: 0.0025,  tier: '🟢' },  // 0.00015 + 0.0024
+  { id: 'gemini-fast',   name: 'Gemini 2.5 Flash Lite — Ultra Fast',   paidOnly: false, cost: 0.0013,  tier: '🟢' },  // 0.000075 + 0.0012
   { id: 'mistral',       name: 'Mistral Small 3.2 — Efficient',        paidOnly: false, cost: 0.0004,  tier: '🟢' },  // 0.0000375 + 0.0004
   { id: 'llama-scout',   name: 'Llama 4 Scout — Long Context MoE',     paidOnly: false, cost: 0.0006,  tier: '🟢' },  // 0.00004 + 0.0006
   { id: 'minimax',       name: 'MiniMax M2.7 — Multi-Language',        paidOnly: false, cost: 0.0025,  tier: '🟢' },  // 0.00015 + 0.0024
@@ -129,11 +129,13 @@ export const LLM_MODELS = [
   { id: 'gpt-5.5',       name: 'GPT-5.5 — Frontier Reasoning',        paidOnly: true, cost: 0.0625,  tier: '💎' },  // 0.0025 + 0.06
   { id: 'gemini',        name: 'Gemini 3 Flash — Pro-Grade',           paidOnly: true, cost: 0.0094,  tier: '💎' },  // 0.000375 + 0.009
   { id: 'gemini-large',  name: 'Gemini 3.1 Pro — Most Intelligent',    paidOnly: true, cost: 0.0375,  tier: '💎' },  // 0.0015 + 0.036
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash — Next-Gen',        paidOnly: true, cost: 0.0281,  tier: '💎' },  // 0.001125 + 0.027
+  { id: 'gemini-flash-lite-3.1', name: 'Gemini 3.1 Flash Lite — Cost-Effective', paidOnly: true, cost: 0.0047, tier: '💎' }, // 0.0001875 + 0.0045
   { id: 'claude',        name: 'Claude Sonnet 4.6 — Balanced',         paidOnly: true, cost: 0.0347,  tier: '💎' },  // 0.00165 + 0.033
   { id: 'claude-large',  name: 'Claude Opus 4.6 — Most Intelligent',   paidOnly: true, cost: 0.0578,  tier: '💎' },  // 0.00275 + 0.055
   { id: 'claude-opus-4.7', name: 'Claude Opus 4.7 — Latest & Best',   paidOnly: true, cost: 0.0578,  tier: '💎' },  // 0.00275 + 0.055
   { id: 'grok-large',    name: 'Grok 4.20 Reasoning — Agentic',       paidOnly: true, cost: 0.013,   tier: '💎' },  // 0.001 + 0.012
-  { id: 'deepseek-pro',  name: 'DeepSeek V4 Pro — Advanced',           paidOnly: true, cost: 0.0077,  tier: '💎' },  // 0.00087 + 0.00696
+  { id: 'deepseek-pro',  name: 'DeepSeek V4 Pro — Advanced',           paidOnly: true, cost: 0.0078,  tier: '💎' },  // 0.00087 + 0.00696
   { id: 'llama-maverick', name: 'Llama 4 Maverick — Multimodal MoE',  paidOnly: true, cost: 0.0021,  tier: '💎' },  // 0.000125 + 0.002
   { id: 'gemma',         name: 'Gemma 4 26B — Open-source MoE',        paidOnly: true, cost: 0.0007,  tier: '💎' },  // 0.000035 + 0.00068
   { id: 'kimi-k2.6',     name: 'Kimi K2.6 — Latest Agentic',          paidOnly: true, cost: 0.0085,  tier: '💎' },  // 0.000475 + 0.008
