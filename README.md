@@ -137,5 +137,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 <p align="center">
-  Powered by <a href="https://pollinations.ai">Pollinations.ai</a> 🌸
+  Powered by <a href="https://pollinations.ai">Pollinations.ai</a>
 </p>
