@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function MultiSelect({ label, selectedIndices, options, onChange, maxSelections = 5, className = '' }) {
+export default function MultiSelect({ selectedIndices, options, onChange, maxSelections = 5, className = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 

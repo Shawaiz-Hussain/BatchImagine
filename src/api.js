@@ -1,4 +1,4 @@
-import { LLM_MODELS, DEFAULT_LLM_IDX } from './presets';
+import { DEFAULT_LLM_IDX } from './presets';
 import JSZip from 'jszip';
 
 // ─── Constants ───
@@ -38,10 +38,6 @@ function sanitizeKey(value) {
   return value.trim().replace(/[^a-zA-Z0-9_\-:.]/g, '').slice(0, 256);
 }
 
-function sanitizeModelId(value) {
-  if (!value || typeof value !== 'string') return '';
-  return value.trim().replace(/[^a-zA-Z0-9_\-:./]/g, '').slice(0, 128);
-}
 
 export function sanitizeTheme(value) {
   if (!value || typeof value !== 'string') return '';
@@ -56,7 +52,6 @@ export function sanitizeTheme(value) {
 
 export function validateSettings(settings) {
   const errors = [];
-  const llm = LLM_MODELS[settings.llmModelIdx] || LLM_MODELS[DEFAULT_LLM_IDX];
 
   // Pollinations key is needed for paid LLM or paid image models
   if (!settings.pollinationsKey) {
@@ -128,7 +123,7 @@ function _parsePrompts(raw, count) {
   // Fallback: split by newlines
   const lines = raw
     .split('\n')
-    .map((l) => l.replace(/^\d+[\.\)]\s*/, '').replace(/^["']|["']$/g, '').trim())
+    .map((l) => l.replace(/^\d+[.)]\s*/, '').replace(/^["']|["']$/g, '').trim())
     .filter((l) => l.length > 15);
 
   if (lines.length > 0) {
@@ -261,38 +256,32 @@ export async function getPollenBalance(pollinationsKey) {
   const headers = { 'Authorization': `Bearer ${pollinationsKey}` };
 
   try {
-    // Fetch total balance
-    const balRes = await fetch('https://gen.pollinations.ai/account/balance', { headers });
+    // Fetch total balance and profile in parallel
+    const [balRes, profileRes] = await Promise.all([
+      fetch('https://gen.pollinations.ai/account/balance', { headers }),
+      fetch('https://gen.pollinations.ai/account/profile', { headers }).catch(() => null),
+    ]);
+
     if (!balRes.ok) return null;
     const balData = await balRes.json();
     const total = Number(balData.balance ?? 0);
 
-    // Try to fetch wallet breakdown (undocumented but available on the website)
-    // Tries: /account/wallet → /account/balances → fallback to total-only
-    let paid = null;
-    let tier = null;
-
-    for (const path of ['/account/wallet', '/account/balances', '/account/pollen']) {
+    // Profile gives us tier info (e.g. "seed", "spore", "flower")
+    // and nextResetAt (when free pollen regenerates)
+    let tierName = null;
+    let nextResetAt = null;
+    if (profileRes?.ok) {
       try {
-        const res = await fetch(`https://gen.pollinations.ai${path}`, { headers });
-        if (res.ok) {
-          const d = await res.json();
-          // Accept any shape that has explicit paid/tier breakdown
-          const p = d.pack_balance ?? d.paid ?? d.packBalance ?? d.paid_balance;
-          const t = d.tier_balance ?? d.tier ?? d.tierBalance ?? d.free ?? d.grant;
-          if (p !== undefined || t !== undefined) {
-            paid = p !== undefined ? Number(p) : null;
-            tier = t !== undefined ? Number(t) : null;
-            break;
-          }
-        }
-      } catch { /* ignore, try next */ }
+        const profile = await profileRes.json();
+        tierName = profile.tier || null;           // e.g. "seed"
+        nextResetAt = profile.nextResetAt || null;  // e.g. "2026-05-28T19:00:00.000Z"
+      } catch { /* ignore */ }
     }
 
     return {
       balance: total,
-      paid: paid,   // null if API doesn't expose breakdown
-      tier: tier,   // null if API doesn't expose breakdown
+      tierName,       // user's tier level (free pollen regenerates based on this)
+      nextResetAt,    // when free pollen next resets/refills
     };
   } catch (err) {
     console.error('Error fetching balance:', err);

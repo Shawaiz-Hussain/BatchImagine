@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function CustomSelect({ label, value, options, onChange, className = '' }) {
+export default function CustomSelect({ value, options, onChange, className = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 

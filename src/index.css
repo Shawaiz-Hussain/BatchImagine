@@ -89,8 +89,10 @@
 
 /* Fix text contrast on buttons in dark mode */
 :root.dark .btn-primary,
-:root.dark .btn-accent {
-  color: #ffffff;
+:root.dark .btn-accent,
+:root.dark .icon-btn,
+:root.dark .nav-btn.active {
+  color: #000000;
 }
 
 /* Remove colorful pastels from "How it works" in dark mode */
@@ -221,6 +223,44 @@ a { color: var(--text-primary); text-decoration: none; font-weight: 700; }
   font-weight: 700;
   color: var(--text-muted);
   text-transform: lowercase;
+}
+
+/* ── Pollen Split Styling ── */
+.pollen-split-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pollen-split-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pollen-split-icon {
+  font-size: 0.85rem;
+}
+.pollen-split-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.pollen-split-value.pollen-negative {
+  color: #d32f2f;
+}
+:root.dark .pollen-split-value.pollen-negative {
+  color: #ff5252;
+}
+.pollen-split-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.pollen-split-divider {
+  width: 2px;
+  height: 18px;
+  background: var(--border);
 }
 
 .logo {
@@ -798,6 +838,7 @@ a { color: var(--text-primary); text-decoration: none; font-weight: 700; }
   padding: 8px;
   border: 2px solid var(--border);
   background: var(--surface);
+  color: var(--text-primary);
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
@@ -807,6 +848,7 @@ a { color: var(--text-primary); text-decoration: none; font-weight: 700; }
 }
 .image-card-actions button:hover {
   background: var(--accent-yellow);
+  color: #000000;
 }
 .image-card-actions button:active {
   transform: translate(1px, 1px);

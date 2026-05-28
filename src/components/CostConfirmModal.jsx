@@ -7,7 +7,7 @@ import { useEffect } from 'react';
  * Props:
  *   onConfirm  — proceed with generation
  *   onCancel   — go back to edit settings
- *   pollen     — balance object { balance, accountBalance: { paid, tier, total } }
+ *   pollen     — balance object { balance, tierName, nextResetAt }
  *   costItems  — array of { label, cost, count?, detail? }
  *   totalCost  — pre-calculated total
  *   warnings   — array of warning strings
@@ -22,17 +22,15 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
 
   // Calculate balance
   const totalBalance = Number(pollen?.balance ?? 0);
-  const hasSplit = pollen?.paid !== null && pollen?.paid !== undefined && pollen?.tier !== null && pollen?.tier !== undefined;
-  const paidBalance = hasSplit ? Number(pollen.paid)  : totalBalance;
-  const tierBalance = hasSplit ? Number(pollen.tier)  : 0;
+  const tierName = pollen?.tierName;
+  const hasBalance = pollen !== null;
 
-  const paidCost = costItems.reduce((sum, item) => sum + (item.paidOnly ? item.cost * (item.count || 1) : 0), 0);
-  const tierCost = costItems.reduce((sum, item) => sum + (!item.paidOnly ? item.cost * (item.count || 1) : 0), 0);
-
-  const hasBalance = pollen && typeof pollen === 'object';
-  const isInsufficient = hasBalance && (
-    totalBalance < totalCost || (hasSplit && paidBalance < paidCost)
-  );
+  // Since we cannot see the exact split between Tier (Free) and Paid pollen via the API,
+  // we just warn if total balance is negative. We don't block them because they might have free tier balance.
+  const isInsufficient = hasBalance && totalBalance < totalCost;
+  
+  // Check if any cost item requires a paid model
+  const hasPaidModels = costItems.some(i => i.paidOnly);
 
   return (
     <div className="modal-overlay cost-modal-overlay" onClick={onCancel}>
@@ -77,42 +75,35 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
 
           {/* Balance Comparison */}
           {hasBalance && (
-            <div className={`cost-balance-card ${isInsufficient ? 'insufficient' : 'sufficient'}`}>
-              <div className="cost-balance-header">Your Balance</div>
-              {hasSplit ? (
-                <div className="cost-balance-split" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '6px' }}>
-                  <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', fontWeight: 800 }}>
-                    <span className="balance-label" style={{ color: 'rgba(255,255,255,0.85)' }}>💎 Paid Pollen (purchased):</span>
-                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)', color: paidBalance < paidCost ? '#ffcdd2' : 'inherit' }}>
-                      {paidBalance.toFixed(4)} pollen
-                    </span>
-                  </div>
-                  <div className="balance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', fontWeight: 800 }}>
-                    <span className="balance-label" style={{ color: 'rgba(255,255,255,0.85)' }}>🟢 Tier Pollen (grant):</span>
-                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)' }}>
-                      {tierBalance.toFixed(4)} pollen
-                    </span>
-                  </div>
-                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)', margin: '4px 0' }} />
-                  <div className="balance-row total-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', fontWeight: 900 }}>
-                    <span className="balance-label">Total Balance:</span>
-                    <span className="balance-value" style={{ fontFamily: 'var(--font-mono)' }}>
-                      {totalBalance.toFixed(4)} pollen
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="cost-balance-single">
-                  <span className="cost-balance-amount">{totalBalance.toFixed(4)}</span>
-                  <span className="cost-balance-unit">pollen</span>
-                </div>
-              )}
+            <div className={`cost-balance-card ${isInsufficient && hasPaidModels ? 'insufficient' : 'sufficient'}`}>
+              <div className="cost-balance-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Your Balance</span>
+                {tierName && (
+                   <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'var(--accent-color)', color: '#000', textTransform: 'uppercase', border: '1px solid #000' }}>
+                     {tierName} TIER
+                   </span>
+                )}
+              </div>
+              
+              <div className="cost-balance-single" style={{ marginTop: '10px' }}>
+                <span className={`cost-balance-amount ${totalBalance < 0 ? 'pollen-negative' : ''}`}>
+                  {totalBalance.toFixed(4)}
+                </span>
+                <span className="cost-balance-unit">pollen</span>
+              </div>
+              
               <div className="cost-balance-comparison" style={{ marginTop: '12px' }}>
                 <span>After generation:</span>
-                <span className={`cost-remaining ${isInsufficient ? 'negative' : ''}`}>
+                <span className={`cost-remaining ${isInsufficient && hasPaidModels ? 'negative' : ''}`}>
                   {(totalBalance - totalCost).toFixed(4)} pollen
                 </span>
               </div>
+              
+              {isInsufficient && !hasPaidModels && tierName && (
+                <div style={{ marginTop: '12px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                  💡 Your total balance is negative, but you might still have free {tierName.toUpperCase()} tier balance to cover this.
+                </div>
+              )}
             </div>
           )}
 
@@ -142,7 +133,7 @@ export default function CostConfirmModal({ onConfirm, onCancel, pollen, costItem
               <div className="cost-warning-item cost-warning-critical">
                 <span>🚫</span>
                 <span>
-                  {hasSplit && paidBalance < paidCost 
+                  {hasPaidModels 
                     ? 'Insufficient paid pollen! This generation requires premium paid pollen. Please top up your balance or switch to free tier models.'
                     : 'Insufficient balance! You may run out of pollen mid-generation. Consider reducing count or switching to cheaper models.'}
                 </span>

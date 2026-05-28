@@ -14,7 +14,6 @@ import {
   buildImageUrl,
   downloadImage,
   downloadAllAsZip,
-  sanitizeTheme,
   getPollenBalance,
 } from './api';
 
@@ -106,11 +105,13 @@ export default function App() {
       const balance = await getPollenBalance(settings.pollinationsKey);
       setPollen(balance);
     } else {
+      await Promise.resolve();
       setPollen(null);
     }
   }, [settings.pollinationsKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshBalance();
 
     // Auto-refresh balance every 30 seconds to keep it synchronized
@@ -376,6 +377,7 @@ export default function App() {
   return (
     <>
       <Header 
+        settings={settings}
         onOpenSettings={() => setShowSettings(true)} 
         pollen={pollen}
         onRefreshBalance={refreshBalance}

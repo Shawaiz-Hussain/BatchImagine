@@ -1,4 +1,8 @@
-export default function Header({ onOpenSettings, pollen, onRefreshBalance, currentView = 'generator', onViewChange, isDarkMode, toggleDarkMode }) {
+export default function Header({ settings, onOpenSettings, pollen, onRefreshBalance, currentView = 'generator', onViewChange, isDarkMode, toggleDarkMode }) {
+  // Derive balance values
+  const totalBalance = pollen ? Number(pollen.balance ?? 0) : null;
+  const tierName = pollen?.tierName;
+
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -27,18 +31,41 @@ export default function Header({ onOpenSettings, pollen, onRefreshBalance, curre
         </nav>
 
         <div className="header-right">
-          <div className="pollen-balance" onClick={onRefreshBalance} style={{ cursor: 'pointer' }} title="Click to refresh balance">
-            {pollen && typeof pollen === 'object' ? (
-              <div className="pollen-single-wrap">
-                <span className="pollen-amount">{Number(pollen.balance ?? 0).toFixed(3)}</span>
-                <span className="pollen-label-inline">pollen</span>
-              </div>
-            ) : (
-              <div className="pollen-single-wrap">
-                <span className="pollen-unit">Not Connected</span>
-              </div>
-            )}
-          </div>
+          {settings?.pollinationsKey ? (
+            <div 
+              className="pollen-balance-container" 
+              onClick={onRefreshBalance} 
+              style={{ 
+                cursor: 'pointer',
+                border: 'var(--border-width) solid var(--border)',
+                backgroundColor: 'var(--surface)',
+                padding: '0.25rem 0.75rem',
+                borderRadius: 'var(--radius-sm)',
+                boxShadow: '2px 2px 0px 0px var(--shadow-color)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 'bold',
+                userSelect: 'none'
+              }} 
+              title="Click to refresh balance"
+            >
+              {pollen ? (
+                <>
+                  <span style={{ 
+                    fontSize: '1rem', 
+                    color: totalBalance < 0 ? 'var(--text-primary)' : 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)'
+                  }}>
+                    {totalBalance.toFixed(3)}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>pollen</span>
+                </>
+              ) : (
+                <span className="pollen-unit" style={{ fontSize: '0.9rem' }}>Not Connected</span>
+              )}
+            </div>
+          ) : null}
 
           <button
             className={`theme-toggle ${isDarkMode ? 'dark' : 'light'}`}
