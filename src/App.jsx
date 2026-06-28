@@ -623,13 +623,15 @@ export default function App() {
                         </button>
                       </div>
                     )}
-                    <img
-                      className={`image-card-img ${img.loaded ? 'loaded' : 'loading'}`}
-                      src={img.url}
-                      alt={img.prompt}
-                      onLoad={() => handleImageLoad(i)}
-                      onError={() => handleImageError(i, img.url)}
-                    />
+                    {img.url && (
+                      <img
+                        className={`image-card-img ${img.loaded ? 'loaded' : 'loading'}`}
+                        src={img.url}
+                        alt={img.prompt}
+                        onLoad={() => handleImageLoad(i)}
+                        onError={() => handleImageError(i, img.url)}
+                      />
+                    )}
                   </div>
                   <div className="image-card-body">
                     <div className="image-card-actions">
